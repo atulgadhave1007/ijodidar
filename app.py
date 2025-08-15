@@ -14,7 +14,9 @@ from werkzeug.utils import secure_filename
 from collections import defaultdict  # ✅ Add this import
 from flask_migrate import Migrate
 
-load_dotenv
+# Load .env file (works both locally and on EC2)
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 # instantiate application and database
 # Instantiate Flask app
