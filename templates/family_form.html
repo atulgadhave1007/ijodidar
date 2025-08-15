@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if current_user.is_authenticated %}
+  <div class="w-100 mt-4" style="padding-top: 25px;">
+    <div class="row border-bottom">
+      <!-- Left Navigation -->
+      <div class="col-3 navbar py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+        <ul class="nav flex-column" style="width: 22rem;">
+          <!-- Add your nav items here -->
+        </ul>
+      </div>
+
+      <!-- Right Section: Family Member Form -->
+      <div class="col-8 offset-3" style="margin-left: 25rem;">
+        <div class="row align-items-center mb-3">
+          <div class="col-1" style="font-size: 2rem; width: 3rem; cursor: pointer;" onclick="location.href='{{ url_for('family') }}'">
+            <!-- Back Arrow SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+            </svg>
+          </div>
+          <div class="col-11" style="font-size: 2rem;">
+            <h3>{{ relation_type if relation_type else relation }}</h3>
+
+          </div>
+        </div>
+
+        <div class="card rounded-3 my-4 p-4">
+          <div class="description mb-3">
+            {{ relation_type if relation_type else '' }} details of your Ijodidar Account.
+          </div>
+
+          <form method="POST" class="row g-3 needs-validation" novalidate>
+            {{ csrf_token() if csrf_token is defined }}
+
+            <!-- Personal Information -->
+            <h5 class="text-secondary mb-3">Personal Information</h5>
+
+            <!-- First Name -->
+            <div class="col-md-6">
+              <label for="firstName" class="form-label">First Name</label>
+              <input type="text" name="first_name" id="firstName" placeholder="First Name"
+                     value="{{ member.first_name if member else '' }}"
+                     class="form-control {% if errors and errors.get('first_name') %}is-invalid{% elif request.method == 'POST' %}is-valid{% endif %}" required>
+              {% if errors and errors.get('first_name') %}
+                <div class="invalid-feedback">{{ errors.get('first_name') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Last Name -->
+            <div class="col-md-6">
+              <label for="lastName" class="form-label">Last Name</label>
+              <input type="text" name="last_name" id="lastName" placeholder="Last Name"
+                     value="{{ member.last_name if member else '' }}"
+                     class="form-control {% if errors and errors.get('last_name') %}is-invalid{% elif request.method == 'POST' %}is-valid{% endif %}" required>
+              {% if errors and errors.get('last_name') %}
+                <div class="invalid-feedback">{{ errors.get('last_name') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Occupation -->
+            <div class="col-md-6">
+              <label for="occupation" class="form-label">Occupation</label>
+              <input type="text" name="occupation" id="occupation" placeholder="Occupation"
+                     value="{{ member.occupation if member else '' }}"
+                     class="form-control {% if errors and errors.get('occupation') %}is-invalid{% elif request.method == 'POST' and member and member.occupation %}is-valid{% endif %}">
+              {% if errors and errors.get('occupation') %}
+                <div class="invalid-feedback">{{ errors.get('occupation') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Relation Type -->
+            <div class="col-md-6">
+              <label for="relationType" class="form-label">Relation</label>
+              {# Priority: POST form data > member_relation.relation_type > relation_type param #}
+              {% set preselect_relation = (
+                  request.form.get('relation_type') if request.method == 'POST' else
+                  (member_relation.relation_type if member_relation else relation_type)
+              ) %}
+              {% set preselect_relation_str = preselect_relation|string|trim|lower if preselect_relation else '' %}
+              <select name="relation_type" id="relationType" required
+                      class="form-control {% if errors and errors.get('relation_type') %}is-invalid{% elif request.method == 'POST' %}is-valid{% endif %}">
+                <option value="">Select Relation</option>
+                {% if relation_types %}
+                  {% for rel_type in relation_types %}
+                    {% set rel_name_str = rel_type.name|string|trim|lower %}
+                    <option value="{{ rel_type.name }}" {% if preselect_relation_str == rel_name_str %}selected{% endif %}>
+                      {{ rel_type.name }}
+                    </option>
+                  {% endfor %}
+                {% else %}
+                  <option disabled>No relation types available</option>
+                {% endif %}
+              </select>
+              {% if errors and errors.get('relation_type') %}
+                <div class="invalid-feedback">{{ errors.get('relation_type') }}</div>
+              {% endif %}
+            </div>
+
+
+            <!-- Age -->
+            <div class="col-md-6">
+              <label for="age" class="form-label">Age</label>
+              <input type="number" name="age" id="age" placeholder="Age" min="0"
+                     value="{{ member.age if member else '' }}"
+                     class="form-control {% if errors and errors.get('age') %}is-invalid{% elif request.method == 'POST' and member and member.age %}is-valid{% endif %}">
+              {% if errors and errors.get('age') %}
+                <div class="invalid-feedback">{{ errors.get('age') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Marital Status -->
+            <div class="col-md-6">
+              <label for="maritalStatus" class="form-label">Marital Status</label>
+              {% set preselect_status = member.marital_status if member else '' %}
+              <select name="marital_status" id="maritalStatus" required
+                      class="form-control {% if errors and errors.get('marital_status') %}is-invalid{% elif request.method == 'POST' %}is-valid{% endif %}">
+                <option value="">Select Marital Status</option>
+                {% for s in ["Single","Married","Widowed","Divorced"] %}
+                  <option value="{{ s }}" {% if preselect_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              {% if errors and errors.get('marital_status') %}
+                <div class="invalid-feedback">{{ errors.get('marital_status') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Contact Number -->
+            <div class="col-md-6">
+              <label for="contactNumber" class="form-label">Contact Number</label>
+              <input type="text" name="contact_number" id="contactNumber" placeholder="Contact Number"
+                     inputmode="numeric" pattern="[0-9]*"
+                     value="{{ member.contact_number if member else '' }}"
+                     class="form-control {% if errors and errors.get('contact_number') %}is-invalid{% elif request.method == 'POST' and member and member.contact_number %}is-valid{% endif %}">
+              {% if errors and errors.get('contact_number') %}
+                <div class="invalid-feedback">{{ errors.get('contact_number') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" name="email" id="email" placeholder="Email Address"
+                     value="{{ member.email if member else '' }}"
+                     class="form-control {% if errors and errors.get('email') %}is-invalid{% elif request.method == 'POST' and member and member.email %}is-valid{% endif %}">
+              {% if errors and errors.get('email') %}
+                <div class="invalid-feedback">{{ errors.get('email') }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Street / House No. -->
+            <div class="col-md-12">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" name="address" id="address" placeholder="Street / House No."
+                    value="{{ address.address1 if address else '' }}"
+                    class="form-control">
+            </div>
+
+            <!-- City -->
+            <div class="col-md-4">
+              <label for="city_id" class="form-label">City</label>
+              <select name="city_id" id="city_id" class="form-control" required>
+                <option value="">Select City</option>
+                {% for city in cities %}
+                  <option value="{{ city.id }}" {% if address and address.city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- State -->
+            <div class="col-md-4">
+              <label for="state_id" class="form-label">State</label>
+              <select name="state_id" id="state_id" class="form-control" required>
+                <option value="">Select State</option>
+                {% for state in states %}
+                  <option value="{{ state.id }}" {% if address and address.state_id == state.id %}selected{% endif %}>{{ state.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Country -->
+            <div class="col-md-4">
+              <label for="country_id" class="form-label">Country</label>
+              <select name="country_id" id="country_id" class="form-control" required>
+                <option value="">Select Country</option>
+                {% for country in countries %}
+                  <option value="{{ country.id }}" {% if address and address.country_id == country.id %}selected{% endif %}>{{ country.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Zip Code -->
+            <div class="col-md-6">
+              <label for="zipcode" class="form-label">Zip Code</label>
+              <input type="text" name="zipcode" id="zipcode" placeholder="Zip Code"
+                    value="{{ address.zipcode if address else '' }}"
+                    class="form-control" required>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="buttons mt-3 text-end">
+              <button type="submit" class="btn btn-outline-success">Save</button>
+              <a href="{{ url_for('family') }}" class="btn btn-outline-danger">Cancel</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

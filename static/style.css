@@ -1,0 +1,173 @@
+body {
+  height: 100%;
+  overflow-y: scroll;
+}
+
+#header {
+  background: white; /* Default background */
+  transition: all 0.3s ease-in-out; /* Smooth transition */
+  box-shadow: none; /* No shadow initially */
+  padding-left: 20px;
+  height: 4rem;
+}
+
+#header.scrolled {
+  box-shadow: 0px 4px 10px rgba(58, 58, 58, 0.2); /* Faint blue blurred bottom border */
+}
+
+.ijodidar-icon {
+  padding: 0 1.25rem;
+  margin-left: 10px;
+  margin-right: 25px;
+  background-color: #fff;
+  border: 2px solid #fd0303;
+  border-radius: 8px; /* Soft edge, rectangular feel */
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.ijodidar-icon a {
+  color: #fd0303;
+  text-decoration: none;
+}
+
+.ijodidar-icon:hover {
+  background-color: #fff4f4;
+}
+
+.ijodidar-icon:hover a {
+  color: #c90000;
+}
+
+
+.search-icon {
+  position: absolute;
+  left: 10px; /* Adjust this value for icon position */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+input.form-control {
+  padding-left: 30px; /* Make space for the icon */
+  height: 50px;
+  border-radius: 8px;
+}
+
+.bi-house-door-fill, .bi-people-fill, .bi-pc-display, .bi-chat-dots-fill, .bi-bell-fill, .bi-envelope-fill, .bi-search{
+  font-size: 28px; /* Adjust the size to your desired value */
+  padding: 0px;
+  margin: 0px;
+
+}
+
+.header-icon-name {
+  font-size: 15px;
+  padding: 0px;
+  margin: 0px;
+  width: 100px;
+  text-align: center;
+}
+
+
+/* Add bottom border for active tab */
+.header-width.active  {
+  width: 100px;
+  height: 4rem;
+}
+
+.header-active.active {
+  border-bottom: 4px solid #000; /* Active tab bottom border */
+  animation: growBorder 0.3s ease-out forwards;
+}
+
+
+/* Fixed Left Navigation */
+.nav-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 23rem; /* Matches your given width */
+    height: 100vh; /* Full viewport height */
+    background-color: #f8f9fa; /* Light background */
+    padding: 1rem;
+    border-right: 1px solid #ddd;
+    overflow-y: hidden; /* Enables scrolling if needed */
+}
+
+
+/* Navigation Links */
+.nav-link {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  transition: all 0.3s ease; /* Smooth transition effect for hover */
+}
+
+.nav-link i {
+  margin-right: 20px; /* Space between icon and text */
+  margin-left: 20px;
+  font-size: 1.5rem;
+}
+
+
+/* Active Link */
+.nav-link.active {
+  background-color: #98cef8; /* Blue background */
+  border-radius: 0 40px 40px 0;
+}
+
+
+
+.card {
+    overflow: hidden;
+}
+
+
+.hover-row, hover-row-bottom, arrow-left{
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.hover-row:hover {
+    background-color: #e5e7e8; /* Light gray background on hover */
+    border-bottom: 1px solid #ddd; /* Light gray border */
+}
+
+.hover-row-bottom:hover {
+    background-color: #e5e7e8; /* Light gray background on hover */
+}
+.text-border {
+    border-bottom: 1px solid #ddd; /* Light gray border */
+}
+
+.navbar {
+  position: fixed;
+  scroll-margin-top: 0;
+  scroll-padding-top: 0;
+}
+
+.input-with-icon {
+  /* Add padding on the right for the icon */
+  padding-right: 2.5rem;
+  text-align: left;
+  /* Set the background image (an inline SVG from Bootstrap Icons) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-caret-down-fill' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658c-.566-.686-.106-1.658.753-1.658h9.592c.86 0 1.319.972.753 1.658L8.753 11.14a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  
+  /* Position the icon on the right inside the input */
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+/* Hide spinner in Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

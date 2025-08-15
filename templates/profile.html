@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+    {% if current_user.is_authenticated %}
+    
+    <div class="w-100 mt-4">
+        <div class="row">
+
+            <!-- Left Navigation -->
+            <div class="col-3 navbar my-4 py-2" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+                <ul class="nav flex-column" style="width: 22rem;">
+                <li class="nav-item">
+                        <a class="nav-link text-dark" href="/home">
+                            <i class="bi bi-house-door-fill mb-2"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark active fw-normal" href="/profile">
+                            <i class="bi bi-person-circle mb-2"></i> Personal Info
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/family">
+                            <i class="bi bi-people-fill mb-2"></i> My Family
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/data-privacy">
+                            <i class="bi bi-shield-lock-fill mb-2"></i> Data & Privacy
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/security">
+                            <i class="bi bi-lock-fill mb-2"></i> Security
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/payments">
+                            <i class="bi bi-credit-card-fill mb-2"></i> Payments & Subscriptions
+                        </a>
+                    </li>
+
+                    <li class="nav-item fixed-bottom mt-0 mb-0 pb-0" style="width: 23rem; bottom: 0; padding: 0; margin: 0; font-size: 0.8rem;">
+                    <div class="row">
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Privacy</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Terms</p>
+                        </div>
+                        <div class="col-2 text-end">
+                            <p class="nav-link text-dark mb-0 pb-0">Help</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">About</p>
+                        </div>
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                    </div>
+                    </li>
+
+                </ul>                
+            </div>
+
+
+            <!-- Right Section: Profile Info -->
+            <div class="col-8 offset-3 my-4" style="margin-left: 25rem;">
+
+                <!-- Header Section -->
+                <div class="row align-items-center text-center ms-2">
+                    <h3 class="mb-2">Personal Info</h3>
+                    <small class="text-muted">Info about you and your preferences across Google services</small>
+                </div>
+
+                <!-- Card Component -->
+                <div class="card rounded-3 my-4">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Basic Info</h5>
+                            <small class="text-muted">Some info may be visible to other people using our services.</small>
+                        </div>
+                    </div>
+
+                    <div class="card-body hover-row text-border">
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3" style="width: 15rem;">Profile Picture</div>
+
+                            <div class="col-8">
+                                {% if current_user.profile_images %}
+                                <p class="mb-0">A profile picture helps personalize your account</p>
+                                {% else %}
+                                <p class="mb-0">Add a profile picture to personalize your account</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Profile Image Upload Trigger -->
+                            <div class="col-1">
+                                {% set primary_image = current_user.profile_images | selectattr('is_primary') | first %}
+                                <button class="btn p-0 border-0" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                                    style="border-radius: 50%; overflow: hidden; width: 64px; height: 64px;">
+                                    {% if primary_image %}
+                                    <img src="{{ primary_image.image_url }}" alt="Profile image" class="rounded-circle"
+                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                    <div style="width: 64px; height: 64px; background-color: #6c757d; border-radius: 50%;
+                                                display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                                    </div>
+                                    {% endif %}
+                                </button>
+                            </div>
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-md">
+                                    <div class="modal-content rounded-4">
+                                        <div class="modal-header justify-content-center">
+                                            <h5 class="modal-title">IJodidar Account</h5>
+                                            <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <h5 class="fw-semibold mb-1 text-start">Profile Picture</h5>
+                                            <p class="text-muted mb-3 text-start" style="font-size: 0.95rem;">
+                                                A picture helps people recognize you and lets you know when you’re signed in to your account
+                                            </p>
+
+                                            <!-- Drag Area -->
+                                            <div class="d-flex justify-content-center">
+                                                <div id="dropArea" style="cursor: pointer;">
+                                                    <div id="clickablePreview">
+                                                        {% if primary_image %}
+                                                        <img id="previewImage" src="{{ primary_image.image_url }}" alt="Preview"
+                                                            class="rounded-circle mb-3" style="width: 128px; height: 128px; object-fit: cover;">
+                                                        {% else %}
+                                                        <div id="previewImageContainer" class="mb-3" style="width: 128px; height: 128px; background-color: #6c757d;
+                                                            border-radius: 50%; display: flex; align-items: center;
+                                                            justify-content: center; color: white; font-size: 2rem;">
+                                                            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                                                        </div>
+                                                        <img id="previewImage" class="rounded-circle mb-3"
+                                                            style="width:128px; height:128px; display:none;">
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- File input (hidden) -->
+                                            <input type="file" id="imageInput" accept="image/*" class="form-control d-none">
+
+                                            <!-- Crop container -->
+                                            <div id="cropContainer" class="cropper-container d-none mt-3 border rounded" style="max-height: 350px;">
+                                                <img id="cropImage" style="max-width: 100%;">
+                                            </div>
+
+                                            <!-- Crop Toolbar (initially hidden) -->
+                                            <div id="cropToolbar" class="d-none d-flex justify-content-center gap-2 my-3">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(0.1)">Zoom In</button>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(-0.1)">Zoom Out</button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="resetCrop()">Reset</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal Footer -->
+                                        <div class="modal-footer justify-content-between px-4">
+                                            <div class="w-100">
+                                                <div class="progress w-100 mt-2 d-none" id="uploadProgressWrapper">
+                                                    <div class="progress-bar" id="uploadProgressBar" role="progressbar" style="width: 0%">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between w-100 mt-3">
+                                                <button type="button" class="btn btn-success" id="uploadBtn">Change</button>
+                                                {% if primary_image %}
+                                                <form method="POST" action="{{ url_for('delete_image', image_id=primary_image.id) }}"
+                                                    onsubmit="return confirm('Are you sure you want to delete your profile image?')">
+                                                    <button class="btn btn-outline-danger" type="submit">Delete</button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    <script src="{{ url_for('static', filename='js/upload_cropper.js') }}"></script>
+
+                </div>
+                
+
+                <div class="card-body hover-row text-border" onclick="location.href='/name'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">                                               
+                            <div class="col-3 col-form-label" style="width: 15rem;">Name</div>
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ current_user.first_name }} {{ current_user.last_name }}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body hover-row text-border" onclick="location.href='/birthday'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">                                               
+                            <div class="col-3 col-form-label" style="width: 15rem;">Birthday</div>
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ profile.date_of_birth.strftime('%B %d, %Y') if profile and profile.date_of_birth else 'N/A' }}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body hover-row text-border" onclick="location.href='/looking_for'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">                                               
+                            <div class="col-3 col-form-label" style="width: 15rem;">Looking For</div>
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ current_user.profile.looking_for if profile and profile.looking_for else ' '}}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body hover-row-bottom" onclick="location.href='/gender'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Gender</div>
+                            <div class="col-8" style="font-size: 1.3rem;">{{ current_user.profile.gender }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Contact Info -->
+                <div class="card rounded-3 my-4">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Contact Info</h5>
+                            <small class="text-muted">Your contact info.</small>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/email'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Email</div>
+                            <div class="col-8" style="font-size: 1.3rem;">{{ current_user.email }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row-bottom" onclick="location.href='/phone'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Phone</div>
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ current_user.phone }}
+                                <br>
+                                {% for alt in current_user.phone_alternates %}
+                                    {{ alt.phone }}<br>
+                                {% endfor %}
+
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Addresses Info -->
+                <div class="card rounded-3 my-4">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Addresses</h5>
+                            <small class="text-muted">Manage addresses associated with your IJodidar Account.</small>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/address/permanent'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Permanent Address</div>    
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ permanent.city.name if permanent and permanent.city else '' }},
+                                {{ permanent.state.name if permanent and permanent.state else '' }},
+                                {{ permanent.country.name if permanent and permanent.country else '' }}
+
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/address/current'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Current Address</div>    
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ current.city.name if current and current.city else '' }},
+                                {{ current.state.name if current and current.state else '' }},
+                                {{ current.country.name if current and current.country else '' }}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/address/work'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Work Address</div>    
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ work.city.name if work and work.city else '' }},
+                                {{ work.state.name if work and work.state else '' }},
+                                {{ work.country.name if work and work.country else '' }}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Work Info -->
+                <div class="card rounded-3 my-4">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Work Info</h5>
+                            <small class="text-muted">Manage work info associated with your IJodidar Account.</small>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/professional'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Occupation</div>    
+                            <div class="col-8" style="font-size: 1.3rem;">{{ professional.occupation if professional and professional.occupation else 'N/A' }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/company'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Company</div>
+                            <div class="col-8" style="font-size: 1.3rem;">{{ professional.company_name if professional and professional.company_name else 'N/A' }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row-bottom" onclick="location.href='/designation'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Designation</div>
+                            <div class="col-8" style="font-size: 1.3rem;">{{ professional.designation if professional and professional.designation else 'N/A' }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Education Info -->
+                <div class="card rounded-3 my-4">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Education Info</h5>
+                            <small class="text-muted">Manage education associated with your IJodidar Account.</small>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/education'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">Qualification</div>    
+                            <div class="col-8" style="font-size: 1.3rem;">
+                                {{ education.degree if education and education.degree else 'N/A' }}
+                                -
+                                {{ education.specialization if education and education.specialization else 'N/A' }}
+                            </div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row-bottom" onclick="location.href='/university'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3 col-form-label" style="width: 15rem;">University</div>
+                            <div class="col-8" style="font-size: 1.3rem;">{{ education.university if education and education.university else 'N/A' }}</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                
+        </div>
+    </div>
+
+    {% endif %}  
+
+
+<!-- Only needed on this page if you are using CropperJS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+
+{% endblock %}

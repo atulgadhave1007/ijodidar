@@ -1,0 +1,10 @@
+<div class="border-bottom d-flex justify-content-between align-items-center px-4 py-3 text-muted">
+  <div>
+    <em>No {{ relation }} details added yet</em>
+  </div>
+  <div>
+    <a href="{{ url_for('add_family_member', relation=relation) }}" class="btn btn-sm btn-outline-success">
+      Add
+    </a>
+  </div>
+</div>

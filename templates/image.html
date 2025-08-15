@@ -1,0 +1,17 @@
+<h3>Your Primary Image</h3>
+{% for image in current_user.images %}
+  {% if image.is_primary %}
+    <img src="{{ image.image_url }}" class="img-thumbnail" style="width:150px; height:150px;">
+  {% endif %}
+{% endfor %}
+
+<h4>Gallery</h4>
+<div class="row">
+  {% for image in current_user.images %}
+    {% if not image.is_primary %}
+      <div class="col-3">
+        <img src="{{ image.image_url }}" class="img-fluid rounded mb-3" style="width:100%;">
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>

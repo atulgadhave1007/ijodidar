@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="w-100 mt-4">
+    <div class="row">
+        <!-- Left Navigation -->
+        <div class="col-3 navbar my-4 py-2" style="width: 23rem;">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                <a class="nav-link active text-dark fw-normal" href="/home">
+                    <i class="bi bi-house-door-fill mb-2"></i> Home
+                </a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link text-dark" href="/profile">
+                    <i class="bi bi-person-circle mb-2"></i> Personal Info
+                </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="/family">
+                        <i class="bi bi-people-fill mb-2"></i> My Family
+                    </a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link text-dark" href="/data-privacy">
+                    <i class="bi bi-shield-lock-fill mb-2"></i> Data & Privacy
+                </a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link text-dark" href="/security">
+                    <i class="bi bi-lock-fill mb-2"></i> Security
+                </a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link text-dark" href="/payments">
+                    <i class="bi bi-credit-card-fill mb-2"></i> Payments & Subscriptions
+                </a>
+                </li>
+                <hr>
+                <li class="nav-item">
+                <a class="nav-link text-dark" href="/about">
+                    <i class="bi bi-info-circle-fill mb-2"></i> About
+                </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="col-8 my-4" style="margin-left: 3rem;">
+                <!-- Card Component -->
+                <div class="card rounded-3">
+                    <div class="card-body">
+                        <div class="row align-items-center ms-2">
+                            <h5 class="mb-2">Basic Info</h5>
+                            <small class="text-muted">Some info may be visible to other people using our services.</small>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/profile'">
+                        <div class="row align-items-center ms-2">
+                            <div class="col-3" style="width: 15rem;">Profle picture</div>
+                            <div class="col-8">
+                                <p class="mb-0">Add a profile picture to personalize your account</p>
+                            </div>
+                            <div class="col-1">
+                                <!-- Profile Picture Placeholder -->
+                                <div
+                                style="width: 64px; height: 64px; background-color: #6c757d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                B
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/profile'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center">
+                            <div class="col-3" style="width: 15rem;">Name</div>
+                            <div class="col-8" style="font-size: 1.3rem;">Balasaheb Gadhave</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row text-border" onclick="location.href='/profile'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center">
+                            <div class="col-3" style="width: 15rem;">Birthday</div>
+                            <div class="col-8" style="font-size: 1.3rem;">June 1, 1965</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body hover-row-bottom" onclick="location.href='/profile'">                    
+                        <!-- Basic Info -->
+                        <div class="row align-items-center">
+                            <div class="col-3" style="width: 15rem;">Gender</div>
+                            <div class="col-8" style="font-size: 1.3rem;">Male</div>
+                            <div class="col-1" style="text-align: right; font-size: 1.3rem; font-style: bold;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>        
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Include Bootstrap Icons (optional for icons) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+
+{% endblock %}

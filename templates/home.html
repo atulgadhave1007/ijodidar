@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+    {% if current_user.is_authenticated %}
+    
+    <div class="w-100 mt-4">
+        <div class="row">
+
+            <!-- Left Navigation -->
+            <div class="col-3 navbar my-4 py-2" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+                <ul class="nav flex-column" style="width: 22rem;">
+                <li class="nav-item">
+                        <a class="nav-link text-dark active" href="/home">
+                            <i class="bi bi-house-door-fill mb-2"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark fw-normal" href="/profile">
+                            <i class="bi bi-person-circle mb-2"></i> Personal Info
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/family">
+                            <i class="bi bi-people-fill mb-2"></i> My Family
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/data-privacy">
+                            <i class="bi bi-shield-lock-fill mb-2"></i> Data & Privacy
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/security">
+                            <i class="bi bi-lock-fill mb-2"></i> Security
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/payments">
+                            <i class="bi bi-credit-card-fill mb-2"></i> Payments & Subscriptions
+                        </a>
+                    </li>
+
+                    <li class="nav-item fixed-bottom mt-0 mb-0 pb-0" style="width: 23rem; bottom: 0; padding: 0; margin: 0; font-size: 0.8rem;">
+                    <div class="row">
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Privacy</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Terms</p>
+                        </div>
+                        <div class="col-2 text-end">
+                            <p class="nav-link text-dark mb-0 pb-0">Help</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">About</p>
+                        </div>
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                    </div>
+                    </li>
+
+                </ul>                
+            </div>
+
+
+            <!-- Right Section: Profile Info -->
+            <div class="col-8 offset-3" style="margin-left: 25rem;">
+
+                <!-- Welcome Section -->
+                <div class="row justify-content-center text-center mt-5">
+                    <div class="col-1">
+                        {% set primary_image = current_user.profile_images | selectattr('is_primary') | first %}
+                        {% if primary_image %}
+                            <img src="{{ primary_image.image_url }}" alt="Profile image" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <!-- Initials fallback -->
+                            <div
+                            style="width: 64px; height: 64px; background-color: #6c757d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h2 style="font-size: 2rem;" class="my-3">
+                        Welcome, {{ current_user.first_name | title }} {{ current_user.last_name | title }}!
+                    </h2>
+                </div>
+
+                <div class="row align-items-center text-center mt-3">
+                    <small class="text-muted">Manage your info, privacy, and security to make Google work better for you. Learn more</small>
+                </div>
+
+                <!-- Profiles in 2 Columns -->
+                <div class="row row-cols-1 row-cols-md-2 g-4 mt-4">
+                                        
+                    {% if not current_user.profile or not current_user.profile.gender %}
+                    <div class="col-12 text-center mt-4">
+                        <p style="color:blue;">Please update your profile with gender to see your matches.</p>
+                    </div>
+                    {% else %}
+                    {% set ns = namespace(profiles_shown=0) %}
+                    <div class="w-100">
+                        <div class="row g-4 mt-3">
+                        {% for user in current_users %}
+                            {% if current_user != user 
+                                and user.profile 
+                                and user.profile.gender 
+                                and user.profile.gender != current_user.profile.gender %}
+                            {% set ns.profiles_shown = ns.profiles_shown + 1 %}
+                            <div class="col-12 col-md-6 d-flex">
+ 
+                                <div class="card mb-3 shadow-sm w-100 border hover-row" onclick="location.href='{{ url_for('user_profile', username=user.username) }}'">
+                                   <div class="row g-0">
+                                    <div class="col-4 d-flex align-items-center justify-content-center">
+                                    {% if user.profile.image_url %}
+                                        <img src="{{ user.profile.image_url }}" class="img-fluid rounded-start" alt="Profile image">
+                                    {% else %}
+                                        <!-- Default SVG avatar if no image_url is provided -->
+                                        <div style="width:100px; height:100px;" class="d-flex align-items-center justify-content-center bg-secondary rounded-start">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="60" height="60" fill="white">
+                                                <!-- Font Awesome User Icon -->
+                                                <path d="M256 288A144 144 0 1 0 256 0a144 144 0 1 0 0 288zm-94.7 32C72.2 320 0 392.2 0 481.3c0 17 
+                                                        13.8 30.7 30.7 30.7l450.6 0c17 0 30.7-13.8 30.7-30.7C512 392.2 439.8 320 
+                                                        350.7 320l-189.4 0z"/>
+                                            </svg>
+                                        </div>
+
+                                    {% endif %}
+                                    </div>
+                                    <div class="col-8">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-1">{{ user.first_name }} {{ user.last_name }}</h5>
+                                        <p class="card-text mb-1">
+                                        <strong>Age:</strong>
+                                        {% if user.date_of_birth %}
+                                            {{ ((now().date() - user.date_of_birth).days // 365) }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                        </p>
+                                        <p class="card-text mb-1">
+                                        <strong>City:</strong>
+                                        {{ user.address.city.name if user.address and user.address.city else 'N/A' }}
+                                        </p>
+                                        <p class="card-text mb-2">
+                                        <strong>Profession:</strong>
+                                        {{ user.professional.occupation if user.professional and user.professional.occupation else 'N/A' }}
+                                        </p>
+                                    </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if ns.profiles_shown == 0 %}
+                        <div class="col-12 text-center mt-4">
+                        <p style="color:blue;">No matching profiles found at the moment.</p>
+                        </div>
+                    {% endif %}
+                    {% endif %}
+                    
+                    
+                </div>
+
+            </div>
+            
+
+                
+        </div>
+    </div>
+
+    {% endif %}  
+
+
+<!-- Include Bootstrap Icons (optional for icons) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+
+{% endblock %}
+

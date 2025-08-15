@@ -1,0 +1,54 @@
+<!-- templates/search_results.html -->
+{% extends "base.html" %}
+
+{% block content %}
+{% if show_filters %}
+<div class="bg-white shadow-sm p-3 sticky-top" style="z-index: 1030; top: 70px;">
+  <form method="get" action="{{ url_for('search_profiles') }}">
+    <div class="row g-2 align-items-center">
+      <input type="hidden" name="keyword" value="{{ request.args.get('keyword', '') }}">
+      
+      <div class="col-md-2">
+        <input type="number" name="min_age" class="form-control" placeholder="Min Age" value="{{ request.args.get('min_age', '') }}">
+      </div>
+      <div class="col-md-2">
+        <input type="number" name="max_age" class="form-control" placeholder="Max Age" value="{{ request.args.get('max_age', '') }}">
+      </div>
+      <div class="col-md-2">
+        <select name="gender" class="form-select">
+          <option value="">Gender</option>
+          <option value="Male" {% if request.args.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if request.args.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <input type="text" name="caste" class="form-control" placeholder="Caste" value="{{ request.args.get('caste', '') }}">
+      </div>
+      <div class="col-md-2">
+        <select name="marital_status" class="form-select">
+          <option value="">Marital Status</option>
+          <option value="Never Married" {% if request.args.get('marital_status') == 'Never Married' %}selected{% endif %}>Never Married</option>
+          <option value="Divorced" {% if request.args.get('marital_status') == 'Divorced' %}selected{% endif %}>Divorced</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<h2>Search Results</h2>
+
+{% if results %}
+  <ul>
+  {% for user in results %}
+    <li>{{ user.username }}</li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No results found.</p>
+{% endif %}
+
+{% endblock %}

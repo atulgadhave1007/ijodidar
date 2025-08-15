@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if current_user.is_authenticated %}
+  <div class="w-100 mt-4" style="padding-top: 25px;">
+    <div class="row border-bottom">
+      <!-- Left Navigation -->
+      <div class="col-3 navbar py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+        <ul class="nav flex-column" style="width: 22rem;"></ul>
+      </div>
+
+      <!-- Right Section: Phone Info -->
+      <div class="col-8 offset-3" style="margin-left: 25rem;">
+        <div class="row align-items-center">
+          <div class="col-1" style="font-size: 2rem; width: 3rem; cursor: pointer;" onclick="location.href='/profile'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+            </svg>
+          </div>
+          <div class="col-11" style="font-size: 2rem;">
+            <h3>Phone number</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Left Navigation (footer section) -->
+      <div class="col-3 navbar my-4 py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+        <ul class="nav flex-column" style="width: 22rem;">
+          <li class="nav-item fixed-bottom" style="width: 23rem; font-size: 0.8rem;">
+            <div class="row text-dark mb-0 pb-0">
+              <div class="col-2">Privacy</div>
+              <div class="col-2">Terms</div>
+              <div class="col-2 text-end">Help</div>
+              <div class="col-2">About</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Right Section: Phone Form -->
+      <div class="col-6 offset-3 my-4" style="margin-left: 25rem;">
+        <div class="card rounded-3 my-4 p-4">
+          <div class="description mb-3">
+            These phone numbers have been added to your Ijodidar Account.
+            <a href="#">Learn more</a>
+          </div>
+
+          <form action="/phone" method="POST">
+            <!-- Primary Phone -->
+            <div class="mb-3">
+              <label for="phone" class="form-label">Primary Phone</label>
+              <input type="text" class="form-control" id="phone" name="phone" placeholder="Primary Phone" value="{{ user.phone or '' }}">
+            </div>
+
+            <!-- Alternate Phones -->
+            <div class="mb-3">
+              <label class="form-label">Alternate Numbers</label>
+              <div id="alternate-numbers">
+                {% for alt in alternate_phones %}
+                  <div class="input-group mb-2">
+                    <input type="text" name="alternate_phones" class="form-control" placeholder="Alternate Phone" value="{{ alt.phone }}">
+                    <div class="input-group-append">
+                      <button type="button" class="btn btn-outline-danger" onclick="removePhoneField(this)">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Add More Button -->
+            <button type="button" class="btn btn-secondary mb-3" onclick="addPhoneField()">+ Add More</button>
+
+            <!-- Submit Buttons -->
+            <div class="buttons mt-3">
+              <button type="submit" class="btn btn-outline-success">Save</button>
+              <a href="/profile" class="btn btn-outline-danger">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Bootstrap Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<!-- Script to Manage Phone Fields -->
+<script>
+  function addPhoneField() {
+    const container = document.getElementById("alternate-numbers");
+    const currentFields = container.querySelectorAll(".input-group").length;
+
+    if (currentFields >= 2) {
+      alert("You can only add up to 2 alternate phone numbers.");
+      return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "input-group mb-2";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = "alternate_phones";
+    input.className = "form-control";
+    input.placeholder = "Add alternate number";
+
+    const btnWrapper = document.createElement("div");
+    btnWrapper.className = "input-group-append";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-danger";
+    button.innerHTML = '<i class="bi bi-x-lg"></i>';
+    button.onclick = function () {
+      removePhoneField(button);
+    };
+
+    btnWrapper.appendChild(button);
+    wrapper.appendChild(input);
+    wrapper.appendChild(btnWrapper);
+    container.appendChild(wrapper);
+  }
+
+  function removePhoneField(button) {
+    const wrapper = button.closest(".input-group");
+    if (wrapper) wrapper.remove();
+  }
+</script>
+
+{% endblock %}

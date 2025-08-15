@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+  {% if current_user.is_authenticated %}
+    <div class="w-100 mt-4" style="padding-top: 25px;">
+      <div class="row border-bottom">
+      
+        <!-- Left Navigation -->
+        <div class="col-3 navbar py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+            <ul class="nav flex-column" style="width: 22rem;">
+              <li class="nav-item">
+              </li>
+            </ul>                
+        </div>
+            
+        <!-- Right Section: Profile Info -->
+        <div class="col-8 offset-3" style="margin-left: 25rem;">
+          <div class="row align-items-center">  
+            <div class="col-1 align-items-center" style="font-size: 2rem; width: 3rem; cursor: pointer;" onclick="location.href='/profile'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+              </svg>
+            </div>
+            <div class="col-11 align-items-center fw-normal" style="font-size: 2rem;">
+                <h3>Birthday</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+      
+        <!-- Left Navigation -->
+        <div class="col-3 navbar my-4 py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+            <ul class="nav flex-column" style="width: 22rem;">
+                <li class="nav-item fixed-bottom mt-0 mb-0 pb-0" style="width: 23rem; bottom: 0; padding: 0; margin: 0; font-size: 0.8rem;">
+                    <div class="row">
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Privacy</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Terms</p>
+                        </div>
+                        <div class="col-2 text-end">
+                            <p class="nav-link text-dark mb-0 pb-0">Help</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">About</p>
+                        </div>
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                    </div>
+                </li>
+            </ul>                
+        </div>
+            
+        
+        <!-- Right Section: Profile Info -->
+        <div class="col-6 offset-3 my-4" style="margin-left: 25rem;">
+          <div class="card rounded-3 my-4 p-4">
+            <div class="description mb-3">
+                Your birthday may be used for account security and personalization across IJodidar services.<a href="#">Learn more</a>
+            </div>
+            <form action="/birthday" method="POST">
+                <!-- Birthday Section -->
+                <h4 class="mt-4">Birth Date</h4>
+                <div class="row mb-3">
+                    <div class="col-4 dropdown mb-3">
+                        <label for="month" class="form-label">Month</label>
+                    
+                        <!-- Input field acting as dropdown toggle -->
+                        <input type="text" id="month" name="month" 
+                                class="form-control w-100 dropdown-toggle input-with-icon text-align-left" 
+                                data-bs-toggle="dropdown" aria-expanded="false"
+                                oninvalid="this.setCustomValidity('Please enter a valid Month!')"
+                                oninput="this.setCustomValidity('')"
+                                value="{{ month if month is defined and month else '' }}"
+                                placeholder="MMM"
+                                style="height: 4rem; font-size: 1.3rem;">
+                                
+                        <!-- Dropdown menu -->
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">January</a></li>
+                            <li><a class="dropdown-item" href="#">February</a></li>
+                            <li><a class="dropdown-item" href="#">March</a></li>
+                            <li><a class="dropdown-item" href="#">April</a></li>
+                            <li><a class="dropdown-item" href="#">May</a></li>
+                            <li><a class="dropdown-item" href="#">June</a></li>
+                            <li><a class="dropdown-item" href="#">July</a></li>
+                            <li><a class="dropdown-item" href="#">August</a></li>
+                            <li><a class="dropdown-item" href="#">September</a></li>
+                            <li><a class="dropdown-item" href="#">October</a></li>
+                            <li><a class="dropdown-item" href="#">November</a></li>
+                            <li><a class="dropdown-item" href="#">December</a></li>
+                        </ul>
+                        
+                    </div>
+                    <div class="col-2 mb-3 px-4">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="number" id="date" name="date" 
+                               class="form-control w-100 text-align-left" 
+                               placeholder="DD" 
+                               min="1" max="31" 
+                               required
+                               oninvalid="this.setCustomValidity('Please enter a valid date (1-31)')"
+                               oninput="this.setCustomValidity('')"
+                               value="{{ day if day else ' ' }}"
+                               style="height: 4rem; font-size: 1.3rem;">
+                        <div class="invalid-feedback">
+                          Please enter a valid date between 1 and 31.
+                        </div>
+                      </div>
+
+                      <div class="col-3 mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" id="year" name="year" 
+                               class="form-control w-100 text-align-left" 
+                               placeholder="YYYY" 
+                               min="1900" max="2100" 
+                               required
+                               oninvalid="this.setCustomValidity('Please enter a valid year!')"
+                               oninput="this.setCustomValidity('')"
+                               value="{{ year if year else ' ' }}"
+                               style="height: 4rem; font-size: 1.3rem;">
+                        <div class="invalid-feedback">
+                          Please enter a valid year between 1900 and 2100.
+                        </div>
+                      </div>
+                </div>   
+
+                <!-- Birth Time -->
+                <h4 class="mt-4">Birth Time</h4>
+                <div class="row mb-3">
+                  <!-- Birth Time -->
+                  <div class="col-6 mb-3">
+                    <label for="birth_time" class="form-label">Birth Time (24 hour format)</label>
+                    <input type="time" id="birth_time" name="birth_time"
+                          class="form-control w-100 text-align-left"
+                          style="height: 4rem; font-size: 1.3rem;"
+                          value="{{ birth_time if birth_time else '' }}">
+                  </div>
+                </div>
+
+
+                <!-- Birth Place -->
+                <h4 class="mt-4">Birth Place</h4>
+                <div class="row">
+                  <!-- City / Village -->
+                  <div class="col-md-4 mb-3">
+                    <label for="birth_city" class="form-label">Village / City</label>
+                    <input type="text" id="birth_city" name="birth_city"
+                          class="form-control w-100 text-align-left"
+                          style="height: 4rem; font-size: 1.3rem;"
+                          value="{{ birth_city if birth_city else '' }}"
+                          placeholder="City Name">
+                  </div>
+                  <!-- State -->
+                  <div class="col-md-4 mb-3">
+                    <label for="birth_state" class="form-label px-2">State</label>
+                    <input type="text" id="birth_state" name="birth_state"
+                          class="form-control w-100 text-align-left"
+                          style="height: 4rem; font-size: 1.3rem;"
+                          value="{{ birth_state if birth_state else '' }}"
+                          placeholder="State Name">
+                  </div>
+                  <!-- Country -->
+                  <div class="col-md-4 mb-3">
+                    <label for="birth_country" class="form-label px-2">Country</label>
+                    <input type="text" id="birth_country" name="birth_country"
+                          class="form-control w-100 text-align-left"
+                          style="height: 4rem; font-size: 1.3rem;"
+                          value="{{ birth_country if birth_country else '' }}"
+                          placeholder="Country Name">
+                  </div>
+                </div>
+                  
+
+                <div class="buttons mt-3 it">
+                  <button type="button" class="btn btn-outline-danger" 
+                          onclick="window.location.href='/profile'">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn btn-outline-success">Save</button>
+                </div>
+            </form>            
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  {% endif %}
+  
+<!-- Include Bootstrap Icons (optional for icons) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+<script>
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', function(event) {
+        document.getElementById('month').value = event.target.textContent;
+      });
+    });
+</script>
+
+
+{% endblock %}

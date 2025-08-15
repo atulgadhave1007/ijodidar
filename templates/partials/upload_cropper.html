@@ -1,0 +1,43 @@
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Upload Image</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <input type="file" id="imageInput" accept="image/*" class="form-control mb-3">
+        <div class="d-none" id="cropContainer"><img id="cropImage"></div>
+        <div class="d-none my-3" id="cropToolbar">
+          <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(0.1)">Zoom In</button>
+          <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(-0.1)">Zoom Out</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="resetCrop()">Reset</button>
+        </div>
+        <div class="progress d-none" id="uploadProgressWrapper">
+          <div class="progress-bar" id="uploadProgressBar">0%</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="uploadBtn" class="btn btn-success">Upload</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+  <div id="uploadSuccessToast" class="toast text-white bg-success border-0" data-bs-delay="3000">
+    <div class="d-flex">
+      <div class="toast-body"><i class="bi bi-check-circle me-2"></i> Image uploaded successfully!</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  <div id="uploadFailToast" class="toast text-white bg-danger border-0" data-bs-delay="4000">
+    <div class="d-flex">
+      <div class="toast-body"><i class="bi bi-x-circle me-2"></i> Upload failed. Try again.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> 
+
+    <!-- ✅ Only one Bootstrap 5.3.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .custom-toast {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        gap: 0.75rem;
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+        width: fit-content;         /* 🔥 Matches content width */
+        max-width: 90vw;            /* ✅ Prevents overflow */
+        word-break: break-word;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+        to { opacity: 1; }
+        }
+
+        /* ✅ Toast Colors */
+        .toast-success {
+        background-color: #1B5E20;
+        color: #fff;
+        }
+        .toast-error {
+        background-color: #df210b;
+        color: #f1f3f40b;
+        }
+        .toast-info {
+        background-color: #df210b;
+        color: #fff;
+        }
+        .toast-warning {
+        background-color: #020e1e;
+        color: #fff;
+        }
+
+        @keyframes fadeOut {
+        to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .fade-out {
+        animation: fadeOut 0.5s forwards;
+        }
+
+    </style>
+
+    <style>
+        .carousel-icons { opacity: 0; transition: opacity 0.3s; }
+        .carousel-item:hover .carousel-icons { opacity: 1; }
+        #previewImage, #cropImage { max-width: 100%; }
+    </style>
+
+
+
+    <title>IJodidar</title>
+
+</head>
+
+<body class="text-bg-white" style="width: 99%;">
+  <header class="navbar navbar-expand-lg text-body-dark bg-white sticky-top my-2 px-0">
+
+    <nav id="header" class="w-100 fixed-top border-bottom" aria-label="Main navigation">
+      <div class="container-fluid ps-2 pe-0">
+
+      {% if user.is_authenticated %}
+      <div class="offcanvas-lg offcanvas-end flex-grow-1" id="bdNavbar">
+        <div class="offcanvas-body p-4 pt-0 p-lg-0 my-0">
+          <!-- Left nav items -->
+          <ul class="navbar-nav flex-row flex-wrap bd-navbar-nav align-items-center">
+            <!-- Branding -->
+            <li class="nav-item col-6 col-lg-auto ijodidar-icon d-flex align-items-center justify-content-center">
+                <a class="navbar-brand fw-medium m-0 p-0 text-decoration-none" href="/home" style="font-size: x-large;">IJodidar</a>
+            </li>
+
+
+            <!-- Nav links -->
+            <!-- Repeat your nav items here... (Home, Blog, etc.) -->
+            <!-- Profile Link -->
+            <li class="nav-item header-width {% if '/home' in request.path %}header-active{% endif %} active col-6 col-lg-auto align-items-center">
+              <a class="nav-link py-2 px-0 px-lg-2 d-flex flex-column align-items-center" style="margin-top: -4px;" href="/home">
+                <i class="bi bi-house-door-fill" style="font-size: 1.5rem;"></i>
+                <span class="px-1 header-icon-name" style="font-size: 0.95rem; margin-top: -6px; font-weight: 500;">Home</span>
+              </a>
+            </li>
+            <li>
+              <form class="position-relative" method="get" action="{{ url_for('search_profiles') }}">
+                <input class="form-control ps-5" type="search" name="keyword" placeholder="Search" aria-label="Search" style="border-radius: 50px;">
+
+                <!-- Search icon inside the input -->
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3" style="color: gray;">
+                  <i class="bi bi-search"></i>
+                </span>
+              </form>
+            </li>
+  
+          </ul>
+          
+          <!-- Right nav items -->
+          <ul class="navbar-nav flex-row flex-wrap ms-md-auto align-items-center">
+            <!-- Profile Dropdown -->
+            <li class="nav-item dropdown px-lg-4">
+              <button class="btn p-0 border-0 dropdown-toggle"
+                      id="bd-theme"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="Toggle theme"
+                      style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden;">
+                {% set primary_image = current_user.profile_images | selectattr('is_primary', 'equalto', True) | first %}
+                {% if primary_image %}
+                <img src="{{ primary_image.image_url }}" alt="Profile image"
+                     style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <div style="width: 100%; height: 100%; background-color: #6c757d; display: flex; align-items: center; justify-content: center; color: white;">
+                  {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                </div>
+                {% endif %}
+              </button>
+
+              <!-- Dropdown menu -->
+              <div class="dropdown-menu dropdown-menu-end text-center align-items-center rounded-5 bg-light my-3 px-4"
+                   style="width: 25rem;" aria-labelledby="bd-theme">
+                <div class="d-flex flex-column align-items-center mb-3">
+                  {% if primary_image %}
+                  <img src="{{ primary_image.image_url }}" alt="Profile" class="rounded-circle"
+                       style="width: 64px; height: 64px; object-fit: cover;">
+                  {% else %}
+                  <div style="width: 64px; height: 64px; background-color: #6c757d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                    {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                  </div>
+                  {% endif %}
+                </div>
+
+                <h4>Hi, {{ current_user.first_name }}</h4>
+
+                <div class="card rounded-5 mt-3 w-100" onclick="location.href='/my_profile'" style="cursor: pointer;">
+                  <div class="card-body">
+                    <h5 class="card-title">View Profile</h5>
+                  </div>
+                </div>
+
+                <div class="card rounded-5 mt-3 w-100" onclick="location.href='/home'" style="cursor: pointer;">
+                  <div class="card-body">
+                    <h5 class="card-title">Manage your IJodidar Account</h5>
+                  </div>
+                </div>
+
+                <div class="card rounded-5 mt-3 w-100">
+                  <div class="card-body border-bottom" onclick="location.href='/logout'" style="cursor: pointer;">
+                    <h5 class="card-title">Sign out</h5>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      {% else %}
+      <!-- Guest Navbar -->
+      <div class="offcanvas-lg offcanvas-end flex-grow-1" id="bdNavbar">
+        <div class="offcanvas-body p-4 pt-0 p-lg-0">
+          <ul class="navbar-nav d-flex flex-row align-items-center">
+            <li class="nav-item">
+              <a class="navbar-brand fw-medium" href="/home" style="color:#fd0303; font-size: x-large;">IJodidar</a>
+            </li>
+            <li class="nav-item me-4">
+              <a class="nav-link py-2 px-2" href="/" rel="noopener">Services</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <!-- ✅ Bootstrap 5 JS only -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Optional: Sticky navbar shadow
+    window.addEventListener("scroll", function () {
+      let header = document.getElementById("header");
+      if (window.scrollY > 1) header.classList.add("scrolled");
+      else header.classList.remove("scrolled");
+    });
+  </script>
+
+  <!-- Flash Messages -->
+  <div>
+
+    <!-- 🔔 Flash Toast Container -->
+    <div id="flash-toast-container" class="position-fixed top-0 start-0 p-3 ms-4 mt-5" style="z-index: 1080;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+            <div class="custom-toast toast-{{ 'error' if category == 'danger' else category }} shadow-sm show mb-2" role="alert">
+            {% if category == 'success' %}
+                <i class="bi bi-check-circle-fill text-success"></i>
+            {% elif category == 'danger' or category == 'error' %}
+                <i class="bi bi-x-circle-fill text-danger"></i>
+            {% elif category == 'info' %}
+                <i class="bi bi-info-circle-fill text-info"></i>
+            {% elif category == 'warning' %}
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+            {% endif %}
+            <span class="flex-grow-1">{{ message }}</span>
+            <button type="button" class="btn-close ms-3" aria-label="Close" onclick="this.parentElement.remove()"></button>
+            </div>
+        {% endfor %}
+        {% endif %}
+    {% endwith %}
+    </div>
+    
+    {% block content %}{% endblock %}
+  </div>
+
+<script>
+  // Auto-dismiss flash toasts after 4 seconds
+  window.addEventListener('DOMContentLoaded', () => {
+    const toasts = document.querySelectorAll('.custom-toast');
+    toasts.forEach(toast => {
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 500); // remove after fade
+      }, 4000); // 4 seconds
+    });
+  });
+</script>
+
+</body>
+</html>

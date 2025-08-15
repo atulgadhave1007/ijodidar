@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}  
+
+  {% if current_user.is_authenticated %}
+    <div class="w-100 mt-4" style="padding-top: 25px;">
+      <div class="row border-bottom">
+      
+        <!-- Left Navigation -->
+        <div class="col-3 navbar py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+            <ul class="nav flex-column" style="width: 22rem;">
+              <li class="nav-item">
+              </li>
+            </ul>                
+        </div>
+            
+        <!-- Right Section: Profile Info -->
+        <div class="col-8 offset-3" style="margin-left: 25rem;">
+          <div class="row align-items-center">  
+            <div class="col-1 align-items-center" style="font-size: 2rem; width: 3rem; cursor: pointer;" onclick="location.href='/profile'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+              </svg>
+            </div>
+            <div class="col-11 align-items-center" style="font-size: 2rem;">
+                <h3>Professional Details</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+      
+        <!-- Left Navigation -->
+        <div class="col-3 navbar my-4 py-2 border-top" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+            <ul class="nav flex-column" style="width: 22rem;">
+                <li class="nav-item fixed-bottom mt-0 mb-0 pb-0" style="width: 23rem; bottom: 0; padding: 0; margin: 0; font-size: 0.8rem;">
+                    <div class="row">
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Privacy</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">Terms</p>
+                        </div>
+                        <div class="col-2 text-end">
+                            <p class="nav-link text-dark mb-0 pb-0">Help</p>
+                        </div>
+                        <div class="col-2">
+                            <p class="nav-link text-dark mb-0 pb-0">About</p>
+                        </div>
+                        <div class="col-1">
+                            <p class="nav-link text-dark mb-0 pb-0"></p>
+                        </div>
+                    </div>
+                </li>
+            </ul>                
+        </div>
+            
+        
+        <!-- Right Section: Profile Info -->
+        <div class="col-6 offset-3 my-4" style="margin-left: 25rem;">
+          <div class="card rounded-3 my-4 p-4">
+            <div class="description mb-3">
+              Changes to your name will be reflected across your Ijodidar Account.
+              Your previous name may still be visible in old messages.
+              <a href="#">Learn more</a>
+            </div>
+              <form action="/professional" method="POST">
+                <!-- Occupation Dropdown -->
+                <div class="mb-3">
+                  <label for="occupation" class="form-label">Occupation</label>
+                  <select class="form-select" name="occupation" id="occupation" required>
+                    <option value="">Select Occupation</option>
+                    {% for occupation in [
+                      'Salaried',
+                      'Business',
+                      'Self Employed',
+                      'Consultant',
+                      'Farmer',
+                      'Government Service',
+                      'Public Servant',
+                      'Other'
+                    ] %}
+                      <option value="{{ occupation }}" {% if professional and professional.occupation == occupation %}selected{% endif %}>
+                        {{ occupation }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-success">Save</button>
+                <a href="/profile" class="btn btn-secondary">Cancel</a>
+              </form>
+
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  {% endif %}
+  
+<!-- Include Bootstrap Icons (optional for icons) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+        
+{% endblock %}
+
+

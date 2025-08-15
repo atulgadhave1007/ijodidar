@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if current_user.is_authenticated %}
+<div class="w-100 mt-4">
+  <div class="row">
+    <!-- Left Navigation -->
+    <div class="col-3 navbar my-4 py-2" style="position: fixed; top: 0; left: 0; height: 68vh; width: 23rem; z-index: 100;">
+      <ul class="nav flex-column" style="width: 22rem;">
+        <!-- your nav items here -->
+      </ul>
+    </div>
+
+    <!-- Right Section -->
+    <div class="col-8 offset-3 my-4" style="margin-left: 25rem;">
+      <div class="row align-items-center text-center ms-2">
+        <h3 class="mb-2">Family Info</h3>
+        <small class="text-muted">Details about your family members associated with your IJodidar Account</small>
+      </div>
+
+      {# 1) Show My Family category first with all relations in desired order #}
+      {% set my_family = categorized.get("My Family") %}
+      {% if my_family %}
+        <div class="card rounded-3 my-4">
+          <div class="card-body">
+            <h5 class="mb-2">My Family</h5>
+            <small class="text-muted">Manage details of your immediate family members.</small>
+          </div>
+
+          {% for relation in ["Father", "Mother", "Brother", "Sister"] %}
+            {% set relation_entry = my_family.get(relation) %}
+            {% if relation_entry and relation_entry.member %}
+              <div class="card-body hover-row text-border"
+                   onclick="location.href='{{ url_for('edit_or_add_family', relation=relation, member_id=relation_entry.member.id) }}'">
+                <div class="row align-items-center ms-2">
+                  <div class="col-3 col-form-label" style="width: 15rem;">{{ relation }}</div>
+                  <div class="col-8" style="font-size: 1.3rem;">
+                    {{ relation_entry.member.first_name }} {{ relation_entry.member.last_name }}
+                  </div>
+                  <div class="col-1 text-end" style="font-size: 1.3rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                         fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd"
+                            d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="card-body hover-row text-border"
+                   onclick="location.href='{{ url_for('edit_or_add_family', relation=relation) }}'">
+                <div class="row align-items-center ms-2">
+                  <div class="col-3 col-form-label" style="width: 15rem;">{{ relation }}</div>
+                  <div class="col-8 text-muted" style="font-size: 1.3rem;">
+                    No {{ relation }} details added yet.
+                  </div>
+                  <div class="col-1 text-end" style="font-size: 1.3rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                         fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd"
+                            d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# 2) Show all other categories except My Family #}
+      {% for category, relations_dict in categorized.items() %}
+        {% if category != "My Family" %}
+          <div class="card rounded-3 my-4">
+            <div class="card-body">
+              <h5 class="mb-2">{{ category }}</h5>
+              <small class="text-muted">Manage {{ category|lower }} info associated with your IJodidar Account.</small>
+            </div>
+
+            {% if relations_dict and relations_dict|length > 0 %}
+              {% for rel, relation_entry in relations_dict.items() %}
+                {% if relation_entry and relation_entry.member %}
+                  <div class="card-body hover-row text-border"
+                      onclick="location.href='{{ url_for('edit_or_add_family', relation=relation, member_id=relation_entry.member.id) }}'">
+                    <div class="row align-items-center ms-2">
+                      <div class="col-3 col-form-label" style="width: 15rem;">{{ rel }}</div>
+                      <div class="col-8" style="font-size: 1.3rem;">
+                        {{ relation_entry.member.first_name }} {{ relation_entry.member.last_name }}
+                      </div>
+                      <div class="col-1 text-end" style="font-size: 1.3rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd"
+                                d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="card-body hover-row text-border"
+                      onclick="location.href='{{ url_for('edit_or_add_family', relation=relation) }}'">
+                    <div class="row align-items-center ms-2">
+                      <div class="col-3 col-form-label" style="width: 15rem;">{{ rel }}</div>
+                      <div class="col-8 text-muted" style="font-size: 1.3rem;">
+                        No {{ rel|lower }} details added yet.
+                      </div>
+                      <div class="col-1 text-end" style="font-size: 1.3rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd"
+                                d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <div class="card-body text-muted" style="margin-left: 1.3rem;">
+                No {{ category|lower }} details added yet.
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
