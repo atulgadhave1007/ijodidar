@@ -1,0 +1,59 @@
+{
+  "family": "ijodidar-task",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "ijodidar-container",
+      "image": "REPLACE_WITH_IMAGE",
+      "essential": true,
+      "memory": 512,
+      "cpu": 256,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SECRET_KEY",
+          "value": "YOUR_SECRET_KEY"
+        },
+        {
+          "name": "DATABASE_URL",
+          "value": "postgresql://atulgadhave:BrettLee%2358-1007%26HK10@ijodidar-db.cpsa8si0ge9a.ap-south-1.rds.amazonaws.com:5432/ijodidar_db"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "value": "YOUR_AWS_ACCESS_KEY_ID"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "value": "YOUR_AWS_SECRET_ACCESS_KEY"
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "value": "my-ij-images"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "ap-south-1"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ijodidar",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole"
+}
