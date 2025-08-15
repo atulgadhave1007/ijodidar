@@ -21,8 +21,14 @@ load_dotenv
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
-# Database URI
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', "sqlite:///my_database.db")
+# Auto-switch between PostgreSQL and SQLite
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # fallback to local SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///my_database.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
