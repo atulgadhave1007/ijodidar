@@ -35,20 +35,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # Now you can access them like this
-AWS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET = os.getenv("AWS_SECRET_ACCESS_KEY")
 BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 REGION = os.getenv("AWS_REGION")
 
 # Example: setting up S3 client
 import boto3
 
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_KEY,
-    aws_secret_access_key=AWS_SECRET,
-    region_name=REGION
-)
+s3 = boto3.client("s3", region_name=REGION)
 
 BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
