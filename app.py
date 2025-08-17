@@ -899,46 +899,47 @@ def university():
 @login_required
 def upload_image():
     file = request.files.get('image')
-    is_primary = request.form.get('is_primary') == 'true' or request.form.get('is_primary') == 'on'
+    is_primary = request.form.get('is_primary') in ('true', 'on')
 
     if not file or file.filename == '':
         flash('No file selected', 'danger')
         return redirect(url_for('view_images'))
 
-    # ✅ Auto-set to primary if user has no primary image yet
+    # ✅ Auto primary if none exists
     if ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).count() == 0:
         is_primary = True
 
-    # ✅ Limit to 5 additional images
+    # ✅ Limit additional images
     if not is_primary:
         additional_count = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=False).count()
         if additional_count >= 5:
             flash("You can only upload up to 5 additional images.", "warning")
             return redirect(url_for('profile'))
 
-    # ✅ Upload to S3 (no ACL, just ContentType)
+    # ✅ Upload to S3
     filename = f"profile_images/{uuid4()}_{secure_filename(file.filename)}"
     try:
+        file.stream.seek(0)
         s3.upload_fileobj(
-            file,
+            file.stream,
             BUCKET_NAME,
             filename,
             ExtraArgs={"ContentType": file.content_type}
         )
     except Exception as e:
-        app.logger.error(f"S3 Upload failed: {e}")
+        print(f"S3 Upload failed: {e}", flush=True)  # <— debug
         flash("Image upload failed. Please try again.", "danger")
         return redirect(url_for('profile'))
 
-    # ✅ Public URL (with region in URL)
-    image_url = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/{filename}"
+    # ✅ Public URL
+    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
-    # ✅ Remove old primary if uploading a new primary
+    # ✅ Replace old primary
     if is_primary:
         old_primary = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).first()
         if old_primary:
             try:
-                key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
+                key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[-1]
                 s3.delete_object(Bucket=BUCKET_NAME, Key=key)
             except Exception as e:
                 app.logger.warning(f"Failed to delete old primary image from S3: {e}")
@@ -950,7 +951,7 @@ def upload_image():
     db.session.commit()
 
     flash("Image uploaded successfully!", "success")
-    return redirect(url_for('my_profile'))  # or 'profile' if that's your default route
+    return redirect(url_for('my_profile'))
 
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
