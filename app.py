@@ -897,7 +897,6 @@ def university():
 
     return render_template('university.html', user=user, education=education)
 
-
 @app.route("/upload_image", methods=["POST"])
 @login_required
 def upload_image():
@@ -906,26 +905,63 @@ def upload_image():
         return redirect(url_for("my_profile"))
 
     file = request.files["image"]
+
     if file.filename == "":
         flash("No selected file", "danger")
         return redirect(url_for("my_profile"))
 
-    # Save directly to S3 (per your existing code)
-    filename = secure_filename(file.filename)
-    s3 = boto3.client("s3")
-    s3.upload_fileobj(file, current_app.config["AWS_S3_BUCKET"], filename,
-                      ExtraArgs={"ACL": "public-read", "ContentType": file.content_type})
+    if not allowed_file(file.filename):
+        flash("Invalid file type. Please upload an image (jpg, jpeg, png, gif).", "danger")
+        return redirect(url_for("my_profile"))
 
-    image_url = f"https://{current_app.config['AWS_S3_BUCKET']}.s3.{current_app.config['AWS_REGION']}.amazonaws.com/{filename}"
+    try:
+        # Generate safe + unique filename
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}.{ext}"
+        filename = secure_filename(unique_filename)
 
-    # Save DB record
-    new_image = ProfileImage(user_id=current_user.id, image_url=image_url,
-                             is_primary=("is_primary" in request.form))
-    db.session.add(new_image)
-    db.session.commit()
+        # Upload to S3
+        s3 = boto3.client("s3")
+        s3.upload_fileobj(
+            file,
+            current_app.config["AWS_S3_BUCKET"],
+            filename,
+            ExtraArgs={
+                "ACL": "public-read",
+                "ContentType": file.content_type,
+            },
+        )
 
-    flash("Image uploaded successfully!", "success")
-    return redirect(url_for("my_profile"))
+        # Build public S3 URL
+        image_url = (
+            f"https://{current_app.config['AWS_S3_BUCKET']}.s3."
+            f"{current_app.config['AWS_REGION']}.amazonaws.com/{filename}"
+        )
+
+        # Handle primary image logic
+        is_primary = "is_primary" in request.form
+        if is_primary:
+            # Unset old primary image(s)
+            ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).update(
+                {"is_primary": False}
+            )
+
+        # Save DB record
+        new_image = ProfileImage(
+            user_id=current_user.id,
+            image_url=image_url,
+            is_primary=is_primary,
+        )
+        db.session.add(new_image)
+        db.session.commit()
+
+        flash("Image uploaded successfully!", "success")
+        return redirect(url_for("my_profile"))
+
+    except Exception as e:
+        logging.exception("Error uploading image to S3")
+        flash("An error occurred while uploading. Please try again.", "danger")
+        return redirect(url_for("my_profile"))
 
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
