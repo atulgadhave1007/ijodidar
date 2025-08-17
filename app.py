@@ -37,17 +37,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 import boto3
 import os
 
+# Config
 REGION = os.getenv("AWS_REGION", "ap-south-1")
 BUCKET_NAME = os.getenv("AWS_S3_BUCKET", "ijodidar-images")
 
-# ✅ Use IAM role automatically (no need for hardcoded keys)
+# Use IAM role (no keys needed on EC2)
 s3 = boto3.client("s3", region_name=REGION)
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 db = SQLAlchemy(app)
 app.app_context().push()
@@ -899,54 +902,68 @@ def university():
 @login_required
 def upload_image():
     file = request.files.get('image')
-    is_primary = request.form.get('is_primary') in ('true', 'on')
+    is_primary = request.form.get('is_primary') in ['true', 'on']
 
+    # Validate file
     if not file or file.filename == '':
         flash('No file selected', 'danger')
-        return redirect(url_for('view_images'))
+        return redirect(url_for('my_profile'))
 
-    # ✅ Auto primary if none exists
+    if not allowed_file(file.filename):
+        flash("Only JPG, JPEG, and PNG are allowed.", "danger")
+        return redirect(url_for('my_profile'))
+
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        flash("File too large (max 2MB).", "danger")
+        return redirect(url_for('my_profile'))
+    file.seek(0)  # reset pointer for upload
+
+    # ✅ Auto-set primary if user has none
     if ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).count() == 0:
         is_primary = True
 
-    # ✅ Limit additional images
+    # ✅ Limit additional images to 5
     if not is_primary:
-        additional_count = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=False).count()
-        if additional_count >= 5:
+        count = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=False).count()
+        if count >= 5:
             flash("You can only upload up to 5 additional images.", "warning")
-            return redirect(url_for('profile'))
+            return redirect(url_for('my_profile'))
 
     # ✅ Upload to S3
     filename = f"profile_images/{uuid4()}_{secure_filename(file.filename)}"
     try:
-        file.stream.seek(0)
         s3.upload_fileobj(
-            file.stream,
+            file,
             BUCKET_NAME,
             filename,
             ExtraArgs={"ContentType": file.content_type}
         )
     except Exception as e:
-        print(f"S3 Upload failed: {e}", flush=True)  # <— debug
+        app.logger.error(f"S3 Upload failed: {e}")
         flash("Image upload failed. Please try again.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('my_profile'))
 
-    # ✅ Public URL
-    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
+    # Public URL
+    image_url = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/{filename}"
 
-    # ✅ Replace old primary
+    # ✅ If new primary, delete old primary
     if is_primary:
         old_primary = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).first()
         if old_primary:
             try:
-                key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[-1]
-                s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+                old_key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
+                s3.delete_object(Bucket=BUCKET_NAME, Key=old_key)
             except Exception as e:
-                app.logger.warning(f"Failed to delete old primary image from S3: {e}")
+                app.logger.warning(f"Failed to delete old primary from S3: {e}")
             db.session.delete(old_primary)
 
-    # ✅ Save new image
-    new_image = ProfileImage(user_id=current_user.id, image_url=image_url, is_primary=is_primary)
+    # ✅ Save record in DB
+    new_image = ProfileImage(
+        user_id=current_user.id,
+        image_url=image_url,
+        is_primary=is_primary
+    )
     db.session.add(new_image)
     db.session.commit()
 
