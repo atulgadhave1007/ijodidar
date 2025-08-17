@@ -899,13 +899,26 @@ def university():
 @login_required
 def upload_image():
     file = request.files.get('image')
-    is_primary = request.form.get('is_primary') == 'true' or request.form.get('is_primary') == 'on'
+    is_primary = request.form.get('is_primary') in ['true', 'on']
 
     if not file or file.filename == '':
         flash('No file selected', 'danger')
         return redirect(url_for('view_images'))
 
-    # ✅ Auto-set to primary if user has no primary image yet
+    # ✅ Check extension
+    if not allowed_file(file.filename):
+        flash("Only JPG, JPEG, PNG files are allowed.", "danger")
+        return redirect(url_for('view_images'))
+
+    # ✅ Check size (fail fast, avoid 2 min timeout)
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    file.seek(0)  # reset pointer
+    if file_length > MAX_FILE_SIZE:
+        flash("File too large (max 2 MB allowed).", "danger")
+        return redirect(url_for('view_images'))
+
+    # ✅ Auto-set to primary if none exists
     if ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).count() == 0:
         is_primary = True
 
@@ -918,15 +931,26 @@ def upload_image():
 
     # ✅ Upload to S3
     filename = f"profile_images/{uuid4()}_{secure_filename(file.filename)}"
-    s3.upload_fileobj(file, BUCKET_NAME, filename, ExtraArgs={"ACL": "public-read"})
-    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
+    try:
+        s3.upload_fileobj(
+            file,
+            BUCKET_NAME,
+            filename,
+            ExtraArgs={"ACL": "public-read", "ContentType": file.mimetype}  # added ContentType
+        )
+    except Exception as e:
+        app.logger.error(f"S3 upload failed: {e}")
+        flash("Upload failed. Please try again.", "danger")
+        return redirect(url_for('view_images'))
+
+    image_url = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/{filename}"  # ✅ added region
 
     # ✅ Remove old primary if uploading a new primary
     if is_primary:
         old_primary = ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).first()
         if old_primary:
             try:
-                key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[-1]
+                key = old_primary.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
                 s3.delete_object(Bucket=BUCKET_NAME, Key=key)
             except Exception as e:
                 app.logger.warning(f"Failed to delete old primary image from S3: {e}")
@@ -938,21 +962,22 @@ def upload_image():
     db.session.commit()
 
     flash("Image uploaded successfully!", "success")
-    return redirect(url_for('my_profile'))  # or 'profile' if that's your default route
+    return redirect(url_for('my_profile'))
+
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 @login_required
 def delete_image(image_id):
     image = ProfileImage.query.get_or_404(image_id)
-    
+
     # Ensure the image belongs to the current user
     if image.user_id != current_user.id:
         abort(403)
 
     # Try to delete from S3
     try:
-        if image.image_url and f"{BUCKET_NAME}.s3.amazonaws.com" in image.image_url:
-            key = image.image_url.split(f"https://{BUCKET_NAME}.s3.amazonaws.com/")[-1]
+        if image.image_url and f"{BUCKET_NAME}.s3.{REGION}.amazonaws.com" in image.image_url:
+            key = image.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
             s3.delete_object(Bucket=BUCKET_NAME, Key=key)
     except Exception as e:
         app.logger.warning(f"[S3 Delete Failed] key={key} error={e}")
@@ -963,20 +988,27 @@ def delete_image(image_id):
     db.session.commit()
 
     flash("Image deleted successfully.", "info")
-    return redirect(url_for('my_profile'))  # Ensure it redirects back to `my_profile`
+    return redirect(url_for('my_profile'))
+
 
 @app.route('/set_primary_image/<int:image_id>')
 @login_required
 def set_primary_image(image_id):
     image = ProfileImage.query.get_or_404(image_id)
+
     if image.user_id != current_user.id:
         abort(403)
 
+    # Reset all images to not primary
     ProfileImage.query.filter_by(user_id=current_user.id).update({"is_primary": False})
+
+    # Set selected image to primary
     image.is_primary = True
     db.session.commit()
+
     flash("Primary image set successfully.", "success")
     return redirect(url_for('profile'))
+
 
 '''
 @app.route('/my_profile')
