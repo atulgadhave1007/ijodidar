@@ -981,6 +981,7 @@ def delete_image(image_id):
         abort(403)
 
     # Try to delete from S3
+    key = None
     try:
         if image.image_url and f"{BUCKET_NAME}.s3.{REGION}.amazonaws.com" in image.image_url:
             key = image.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
@@ -997,7 +998,7 @@ def delete_image(image_id):
     return redirect(url_for('my_profile'))
 
 
-@app.route('/set_primary_image/<int:image_id>')
+@app.route('/set_primary_image/<int:image_id>', methods=['POST'])
 @login_required
 def set_primary_image(image_id):
     image = ProfileImage.query.get_or_404(image_id)
@@ -1005,7 +1006,7 @@ def set_primary_image(image_id):
     if image.user_id != current_user.id:
         abort(403)
 
-    # Reset all images to not primary
+    # Reset all user's images to not primary
     ProfileImage.query.filter_by(user_id=current_user.id).update({"is_primary": False})
 
     # Set selected image to primary
@@ -1013,7 +1014,8 @@ def set_primary_image(image_id):
     db.session.commit()
 
     flash("Primary image set successfully.", "success")
-    return redirect(url_for('profile'))
+    return redirect(url_for('my_profile'))
+
 
 
 '''
