@@ -898,11 +898,11 @@ def university():
     return render_template('university.html', user=user, education=education)
 
 
-@app.route('/upload_image', methods=['POST'])
+@app.route("/upload_image", methods=["POST"])
 @login_required
 def upload_image():
     if "image" not in request.files:
-        flash("No file uploaded", "danger")
+        flash("No file part", "danger")
         return redirect(url_for("my_profile"))
 
     file = request.files["image"]
@@ -910,18 +910,21 @@ def upload_image():
         flash("No selected file", "danger")
         return redirect(url_for("my_profile"))
 
-    filename = f"user_{current_user.id}_{uuid.uuid4().hex}.jpg"
-    image_url = upload_to_s3(file, filename)
+    # Save directly to S3 (per your existing code)
+    filename = secure_filename(file.filename)
+    s3 = boto3.client("s3")
+    s3.upload_fileobj(file, current_app.config["AWS_S3_BUCKET"], filename,
+                      ExtraArgs={"ACL": "public-read", "ContentType": file.content_type})
 
-    is_primary = bool(request.form.get("is_primary"))
-    if is_primary:
-        ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).update({"is_primary": False})
+    image_url = f"https://{current_app.config['AWS_S3_BUCKET']}.s3.{current_app.config['AWS_REGION']}.amazonaws.com/{filename}"
 
-    image = ProfileImage(user_id=current_user.id, image_url=image_url, is_primary=is_primary)
-    db.session.add(image)
+    # Save DB record
+    new_image = ProfileImage(user_id=current_user.id, image_url=image_url,
+                             is_primary=("is_primary" in request.form))
+    db.session.add(new_image)
     db.session.commit()
 
-    flash("Image uploaded successfully.", "success")
+    flash("Image uploaded successfully!", "success")
     return redirect(url_for("my_profile"))
 
 

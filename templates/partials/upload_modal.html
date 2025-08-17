@@ -1,47 +1,82 @@
-<!-- Shared Upload Modal -->
-<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content rounded-4">
-      <div class="modal-header">
-        <h5 class="modal-title" id="uploadModalLabel">Upload Image</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 
-      <div class="modal-body text-center">
-        <!-- Drag & Drop Area (shown only in profile page) -->
-        <div id="dropArea" class="border rounded p-3 mb-3 text-muted d-none" style="border-style: dashed;">
-          Drag & drop image here
-        </div>
+<script>
+let cropper;
+const imageInput = document.getElementById("imageInput");
+const cropContainer = document.getElementById("cropContainer");
+const cropImage = document.getElementById("cropImage");
+const cropToolbar = document.getElementById("cropToolbar");
+const uploadBtn = document.getElementById("uploadBtn");
+const uploadProgressWrapper = document.getElementById("uploadProgressWrapper");
+const uploadProgressBar = document.getElementById("uploadProgressBar");
 
-        <input type="file" id="imageInput" accept="image/*" class="form-control mb-3">
+// Handle file selection
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-        <!-- Preview Container (used in profile.html) -->
-        <div id="previewImageContainer" class="mb-3 d-flex justify-content-center d-none">
-          <img id="previewImage" class="rounded-circle shadow" style="width: 128px; height: 128px; display: none;">
-        </div>
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    cropImage.src = event.target.result;
 
-        <!-- Crop Preview Image -->
-        <div id="cropContainer" class="d-none">
-          <img id="cropImage" style="max-width: 100%;">
-        </div>
+    // Show crop UI
+    cropContainer.classList.remove("d-none");
+    cropToolbar.classList.remove("d-none");
 
-        <!-- Crop Toolbar -->
-        <div id="cropToolbar" class="d-none my-3">
-          <button class="btn btn-sm btn-outline-primary me-2" onclick="zoomCrop(0.1)">Zoom In</button>
-          <button class="btn btn-sm btn-outline-primary me-2" onclick="zoomCrop(-0.1)">Zoom Out</button>
-          <button class="btn btn-sm btn-outline-danger" onclick="resetCrop()">Reset</button>
-        </div>
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(cropImage, {
+      aspectRatio: 1, // square crop
+      viewMode: 1,
+      autoCropArea: 1
+    });
+  };
+  reader.readAsDataURL(file);
+});
 
-        <!-- Upload Progress -->
-        <div id="uploadProgressWrapper" class="progress d-none">
-          <div id="uploadProgressBar" class="progress-bar" style="width: 0%">0%</div>
-        </div>
-      </div>
+// Toolbar actions
+function zoomCrop(val) { if (cropper) cropper.zoom(val); }
+function resetCrop() { if (cropper) cropper.reset(); }
+window.zoomCrop = zoomCrop;
+window.resetCrop = resetCrop;
 
-      <div class="modal-footer">
-        <button id="uploadBtn" class="btn btn-success">Upload</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
+// Handle upload via AJAX
+uploadBtn.addEventListener("click", async () => {
+  if (!cropper) {
+    alert("Please select and crop an image first.");
+    return;
+  }
+
+  uploadProgressWrapper.classList.remove("d-none");
+  uploadProgressBar.style.width = "0%";
+  uploadProgressBar.textContent = "0%";
+
+  cropper.getCroppedCanvas({ width: 600, height: 600 }).toBlob(async (blob) => {
+    const formData = new FormData();
+    formData.append("image", blob, "profile.jpg");
+    formData.append("is_primary", "0"); // could toggle via checkbox in modal
+
+    try {
+      const response = await fetch("{{ url_for('upload_image') }}", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      // Progress bar simulation (since fetch doesn’t support progress)
+      uploadProgressBar.style.width = "100%";
+      uploadProgressBar.textContent = "Uploaded";
+
+      // Reload to refresh carousel
+      setTimeout(() => window.location.reload(), 1000);
+
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed!");
+    }
+  }, "image/jpeg");
+});
+</script>
