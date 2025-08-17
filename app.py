@@ -901,25 +901,28 @@ def university():
 @app.route('/upload_image', methods=['POST'])
 @login_required
 def upload_image():
-    app.logger.info("Upload route hit")
+    if "image" not in request.files:
+        flash("No file uploaded", "danger")
+        return redirect(url_for("my_profile"))
 
-    if 'file' not in request.files:
-        app.logger.error("No file part in request")
-        return jsonify({"success": False, "error": "No file"}), 400
+    file = request.files["image"]
+    if file.filename == "":
+        flash("No selected file", "danger")
+        return redirect(url_for("my_profile"))
 
-    file = request.files['file']
-    if file.filename == '':
-        app.logger.error("No selected file")
-        return jsonify({"success": False, "error": "No filename"}), 400
+    filename = f"user_{current_user.id}_{uuid.uuid4().hex}.jpg"
+    image_url = upload_to_s3(file, filename)
 
-    try:
-        # your S3 upload logic
-        app.logger.info(f"Uploading file: {file.filename}")
-    except Exception as e:
-        app.logger.exception("Upload failed")
-        return jsonify({"success": False, "error": str(e)}), 500
+    is_primary = bool(request.form.get("is_primary"))
+    if is_primary:
+        ProfileImage.query.filter_by(user_id=current_user.id, is_primary=True).update({"is_primary": False})
 
-    return jsonify({"success": True})
+    image = ProfileImage(user_id=current_user.id, image_url=image_url, is_primary=is_primary)
+    db.session.add(image)
+    db.session.commit()
+
+    flash("Image uploaded successfully.", "success")
+    return redirect(url_for("my_profile"))
 
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
@@ -927,21 +930,17 @@ def upload_image():
 def delete_image(image_id):
     image = ProfileImage.query.get_or_404(image_id)
 
-    # Ensure the image belongs to the current user
     if image.user_id != current_user.id:
         abort(403)
 
-    # Try to delete from S3
-    key = None
     try:
-        if image.image_url and f"{BUCKET_NAME}.s3.{REGION}.amazonaws.com" in image.image_url:
-            key = image.image_url.split(f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/")[-1]
-            s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        if image.image_url:
+            key = image.image_url.split("/")[-1]
+            s3.delete_object(Bucket=app.config['AWS_S3_BUCKET'], Key=key)
     except Exception as e:
         app.logger.warning(f"[S3 Delete Failed] key={key} error={e}")
         flash("Could not delete image from S3, but removed from profile.", "warning")
 
-    # Delete from DB
     db.session.delete(image)
     db.session.commit()
 
@@ -949,7 +948,7 @@ def delete_image(image_id):
     return redirect(url_for('my_profile'))
 
 
-@app.route('/set_primary_image/<int:image_id>', methods=['POST'])
+@app.route('/set_primary_image/<int:image_id>')
 @login_required
 def set_primary_image(image_id):
     image = ProfileImage.query.get_or_404(image_id)
@@ -957,16 +956,12 @@ def set_primary_image(image_id):
     if image.user_id != current_user.id:
         abort(403)
 
-    # Reset all user's images to not primary
     ProfileImage.query.filter_by(user_id=current_user.id).update({"is_primary": False})
-
-    # Set selected image to primary
     image.is_primary = True
     db.session.commit()
 
     flash("Primary image set successfully.", "success")
-    return redirect(url_for('my_profile'))
-
+    return redirect(url_for('profile'))
 
 
 '''
