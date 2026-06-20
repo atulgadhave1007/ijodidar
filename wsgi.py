@@ -1,8 +1,10 @@
-from gevent import monkey
-monkey.patch_all()
-
-
 import os
+
+# gevent monkey-patching only on Linux/Mac (production). Windows doesn't support it.
+import sys
+if sys.platform != 'win32':
+    import eventlet
+    eventlet.monkey_patch()
 from app import create_app, socketio
 
 env = os.environ.get('FLASK_ENV', 'development')   # default to dev, not prod

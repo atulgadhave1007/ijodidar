@@ -136,14 +136,17 @@ def register():
                 # NOTE: reward_referrer() and reward_referred() called in verify_phone()
 
         # Async email — Celery handles sending, register() returns immediately
-        from app.tasks import send_verification_email_task, send_welcome_email_task
-        send_verification_email_task.delay(user.id)
-        send_welcome_email_task.delay(user.id)
+        try:
+            from app.tasks import send_verification_email_task, send_welcome_email_task
+            send_verification_email_task.delay(user.id)
+            send_welcome_email_task.delay(user.id)
+        except Exception as e:
+            current_app.logger.warning(f'Email task enqueue failed (Celery/Redis not running?): {e}')
 
-
-        flash('Account created! Please check your email to verify your account.',
-              'success')
-        return redirect(url_for('auth.login'))
+        # Phone-first (C1): auto-login and send to phone verification immediately
+        login_user(user)
+        flash('Account created! Please verify your phone number to continue.', 'success')
+        return redirect(url_for('auth.verify_phone'))
 
     # Show form errors as flash messages
     for field, errors in form.errors.items():

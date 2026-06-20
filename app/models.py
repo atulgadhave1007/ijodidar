@@ -464,7 +464,9 @@ class PartnerPreference(db.Model):
     caste          = db.Column(db.String(80))
     mother_tongue  = db.Column(db.String(50))
     marital_status = db.Column(db.String(30))
-    min_income     = db.Column(db.String(30))  # e.g. "3 LPA"
+    min_income     = db.Column(db.String(30))     # legacy text — kept for migration
+    min_income_lpa = db.Column(db.Integer, nullable=True)   # Integer LPA (C8 resolution)
+    max_income_lpa = db.Column(db.Integer, nullable=True)
     education_level = db.Column(db.String(100))
     manglik        = db.Column(db.String(20))
     diet           = db.Column(db.String(30))

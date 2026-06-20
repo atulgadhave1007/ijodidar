@@ -36,7 +36,7 @@ limiter    = Limiter(key_func=get_remote_address)
 # async_mode: 'threading' works everywhere (dev+Windows), 'gevent' for production
 # Resolved at runtime based on installed packages
 import os as _os
-_async_mode = 'gevent' if _os.environ.get('FLASK_ENV') == 'production' else 'threading'
+_async_mode = 'eventlet' if _os.environ.get('FLASK_ENV') == 'production' else 'threading'
 socketio   = SocketIO(cors_allowed_origins="*", async_mode=_async_mode)
 
 login_mgr.login_view             = 'auth.login'
@@ -106,6 +106,41 @@ def create_app(env='default'):
         'main.landing', 'main.privacy_policy', 'main.terms',
         'static',
     }
+
+    @app.before_request
+    def update_last_active():
+        """Update last_active_at at most once per hour to avoid per-request DB writes."""
+        from flask_login import current_user
+        from flask import session
+        if not current_user.is_authenticated:
+            return
+        from datetime import datetime
+        now      = datetime.utcnow()
+        last_str = session.get('_last_active_written')
+        if last_str:
+            try:
+                last_dt = datetime.fromisoformat(last_str)
+                if (now - last_dt).total_seconds() < 3600:
+                    return
+            except (ValueError, TypeError):
+                pass
+        current_user.last_active_at = now
+        db.session.commit()
+        session['_last_active_written'] = now.isoformat()
+
+    @app.before_request
+    def enforce_phone_verification():
+        """Require phone OTP before accessing the platform (C1 — phone-first registration)."""
+        from flask_login import current_user
+        from flask import request as req, redirect, url_for
+        if not current_user.is_authenticated:
+            return
+        if req.endpoint in ONBOARDING_EXEMPT or not req.endpoint:
+            return
+        if req.endpoint.startswith('console.'):
+            return
+        if not current_user.phone_verified:
+            return redirect(url_for('auth.verify_phone'))
 
     @app.before_request
     def validate_session_version():
