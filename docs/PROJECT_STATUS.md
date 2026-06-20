@@ -2,68 +2,79 @@
 ---
 
 ## v2 TRANSFORMATION STATUS
-_Last updated: 2026-06-20 by Claude Code (Pre-Sprint 0 session)_
+_Last updated: 2026-06-20 by Claude Code (Sprint 1 complete)_
 
-### Current Sprint: Pre-Sprint 0 — COMPLETE
+### Current Sprint: Sprint 1 — COMPLETE | Next: Sprint 2
 
-### Maturity Scorecard (this sprint vs baseline)
+### Maturity Scorecard (Sprint 1 vs baseline)
 | Dimension | Baseline | Current | Trend |
 |---|---|---|---|
-| Product | 52 | 52 | → (no product changes yet) |
-| Architecture | 64 | 65 | ↑ (admin blueprint removed; async email fixed) |
-| Security | 72 | 72 | → |
+| Product | 52 | 55 | ↑ (phone-first reg; daily match digest live) |
+| Architecture | 64 | 70 | ↑ (ContextTask fixed; Beat running; no circular imports) |
+| Security | 72 | 74 | ↑ (phone gate enforced; last_active_at throttled) |
 | Mobile | 28 | 28 | → |
-| Scalability | 58 | 58 | → |
-| Competitiveness | 40 | 40 | → |
-| **Overall** | **52** | **52** | → (Pre-Sprint 0 is housekeeping; scores move in Sprint 1+) |
+| Scalability | 58 | 60 | ↑ (subscription expiry automated; Beat scheduler live) |
+| Competitiveness | 40 | 43 | ↑ (daily match digest = highest-ROI re-engagement lever) |
+| **Overall** | **52** | **55** | ↑ |
 
-### Sprint Deliverables — Status
+### Sprint 1 Deliverables — Status
 | Item | Status | Notes |
 |---|---|---|
-| 1. Delete duplicate /ijodidar/ directory | DONE | Not present in this working copy; verify on EC2 (DEC-001) |
-| 2. Remove deprecated /admin/ blueprint | DONE | app/admin/ deleted; templates/admin/ deleted; __init__.py registration removed |
-| 3. Fix sync email in SocketIO handler | DONE | socket_events.py: send_email() → send_message_email_task.delay() |
-| 4. Fix db.session.commit() in model method | DONE | UserSubscription.interests_remaining(): commit removed; caller responsibility |
-| 5. Wire income filter to search query | DONE | search/routes.py: ProfessionalDetails.income_lpa range filter added |
-| 6. Remove duplicate check_gotra_compatibility | DONE | Not present; only one definition exists (DEC-002) |
-| 7. Add User.last_active_at + migration | DONE | Column added to models.py; migration a1b2c3d4e5f6 created |
-| CLAUDE.md at repo root | DONE | Copied from claude-code-setup/CLAUDE.md |
-| docs/decisions/DECISION_LOG.md created | DONE | 3 entries logged |
-| docs/phases/ and docs/decisions/ created | DONE | Governance structure in place |
+| Celery ContextTask fix | DONE | Lazy _get_flask_app() singleton; no more `from wsgi import app` in tasks |
+| Celery Beat scheduler | DONE | ijodidar-beat.service running; 5 scheduled tasks registered |
+| sweep_expired_subscriptions | DONE | Hourly — prevents paid features surviving expiry |
+| send_daily_matches_all + send_daily_match_digest | DONE | Daily 02:30 UTC fan-out; highest-ROI re-engagement |
+| cleanup_expired_otps | DONE | Daily 03:00 UTC |
+| cleanup_stale_notifications | DONE | Weekly Sunday 04:00 UTC |
+| refresh_match_scores | DONE | Placeholder — Sprint 4 replaces with MatchScoreCache |
+| Phone-first registration (C1) | DONE | register() auto-logins + redirects to verify_phone |
+| enforce_phone_verification gate | DONE | before_request: phone_verified required for all non-exempt routes |
+| verify_phone.html updated | DONE | Shows phone entry form if phone not yet set |
+| last_active_at hourly update | DONE | before_request throttled via session key (1h) |
+| PartnerPreference income columns (C8) | DONE | min_income_lpa + max_income_lpa Integer; migration f1a2b3c4d5e6 applied |
+| All migrations applied on EC2 | DONE | Head: f1a2b3c4d5e6 |
+| ijodidar.com login/register working | DONE | HTTP 200 confirmed post-Sprint 1 deploy |
 
-### Open Blockers / Risks (top of Risk Register, §8.4)
+### Pre-Sprint 0 Deliverables — Status (carried forward, all DONE)
+| Item | Status |
+|---|---|
+| Delete duplicate /ijodidar/ directory | DONE (not present) |
+| Remove deprecated /admin/ blueprint | DONE |
+| Fix sync email in SocketIO handler | DONE |
+| Fix db.session.commit() in model method | DONE |
+| Wire income filter to search query | DONE |
+| Remove duplicate check_gotra_compatibility | DONE (not present) |
+| Add User.last_active_at + migration | DONE |
+| S3 bucket + IAM role confirmed | DONE |
+| Redis installed + running on EC2 | DONE (redis-server) |
+
+### Open Blockers / Risks
 | Risk | Tier | Owner | Action |
 |---|---|---|---|
-| S3 bucket + IAM role not confirmed operational | Medium | Atul | Confirm before Sprint 1 deploy |
-| Rate limiting Redis-backed (not in-memory) — unconfirmed | Medium | Atul | Verify limiter storage_uri in config.py |
-| Duplicate /ijodidar/ may exist on EC2 repo | Medium | Atul | Check on EC2 before next deployment |
-| Migration a1b2c3d4e5f6 not yet applied to DB | Blocking (for last_active_at) | Dev | Run: flask db upgrade |
-
-### External Go/No-Go conditions (from §7.1)
-| Condition | Status |
-|---|---|
-| S3 bucket + IAM role operational | ❓ Unconfirmed — verify manually |
-| Redis-backed rate limiting confirmed | ❓ Unconfirmed — check config.py RATELIMIT_STORAGE_URI |
-| Sprint 1 lead has read MASTER_PROMPT.md §3–§7 | ✅ Current session lead confirmed |
+| Celery worker (not Beat) — confirm running separately | Medium | Atul | `sudo systemctl status ijodidar-celery` — may need to create worker service |
+| Rate limiting Redis DB — confirm REDIS_URL in .env | Medium | Atul | Check /home/ubuntu/ijodidar/.env has REDIS_URL set |
+| PartnerPreference income search not yet wired to new columns | Low | Sprint 2 | Wire search to min/max_income_lpa in search/routes.py |
+| eventlet deprecation warnings in logs | Low | Sprint 4 | Migrate to gevent or asyncio when eventlet drops Python 3.12 support |
 
 ### Document Version Table
 | Document | Last touched | By |
 |---|---|---|
 | MASTER_PROMPT.md | 2026-06-20 | Claude Code Pre-Sprint 0 |
 | CLAUDE.md (repo root) | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| docs/decisions/DECISION_LOG.md | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| app/__init__.py | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| app/messaging/socket_events.py | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| app/models.py | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| app/search/routes.py | 2026-06-20 | Claude Code Pre-Sprint 0 |
-| migrations/versions/a1b2c3d4e5f6_add_user_last_active_at.py | 2026-06-20 | Claude Code Pre-Sprint 0 |
+| docs/decisions/DECISION_LOG.md | 2026-06-20 | Claude Code Sprint 1 |
+| app/__init__.py | 2026-06-20 | Claude Code Sprint 1 |
+| app/tasks.py | 2026-06-20 | Claude Code Sprint 1 |
+| app/models.py | 2026-06-20 | Claude Code Sprint 1 |
+| app/auth/routes.py | 2026-06-20 | Claude Code Sprint 1 |
+| templates/auth/verify_phone.html | 2026-06-20 | Claude Code Sprint 1 |
+| migrations/versions/f1a2b3c4d5e6_sprint1_income_columns.py | 2026-06-20 | Claude Code Sprint 1 |
 
-### Next Session Should
-1. **Apply the migration on the target database**: `flask db upgrade` (adds `users.last_active_at` column).
-2. **Verify on EC2**: check whether `/ijodidar/` duplicate directory exists there (`ls ~/ijodidar/` or equivalent) — delete it if found.
-3. **Confirm Redis-backed rate limiting**: check `config.py` for `RATELIMIT_STORAGE_URI`; must point to Redis, not in-memory.
-4. **Confirm S3 bucket + IAM role**: verify `AWS_S3_BUCKET` env var resolves to a real, accessible bucket.
-5. **Start Sprint 1**: Celery Beat + ContextTask fix + phone-first registration + trust-tier properties + PartnerPreference income columns (§7, Sprint 1).
+### Next Session Should (Sprint 2 — Weeks 4–5)
+1. **Confirm Celery worker service** exists and is running (`ijodidar-celery.service`); create if missing.
+2. **Wire search to new income columns**: update `search/routes.py` and partner preferences form to use `min_income_lpa`/`max_income_lpa`.
+3. **Sprint 2 primary**: Discovery tabs + conversion mechanics (per-day pricing, social proof) + REST API Phase 1 (auth, profiles, feed endpoints) — see MASTER_PROMPT.md §7 Sprint 2.
+4. **REST API foundation**: create `app/api/` package, JWT via Flask-JWT-Extended, `/api/v1/auth/register` + `/login` + `/me` + `/feed` endpoints.
+5. **Read** `API_ARCHITECTURE.md` before writing any API code — full endpoint spec is already there.
 
 # iJodidar â€” Project Status
 ## v25 Auto-Kundli | Complete Production Build | June 2026
