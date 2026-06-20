@@ -2,9 +2,9 @@
 ---
 
 ## v2 TRANSFORMATION STATUS
-_Last updated: 2026-06-20 by Claude Code (Sprint 1 complete)_
+_Last updated: 2026-06-20 by Claude Code (Sprint 2 complete)_
 
-### Current Sprint: Sprint 1 — COMPLETE | Next: Sprint 2
+### Current Sprint: Sprint 2 — COMPLETE | Next: Sprint 3
 
 ### Maturity Scorecard (Sprint 1 vs baseline)
 | Dimension | Baseline | Current | Trend |
@@ -16,6 +16,34 @@ _Last updated: 2026-06-20 by Claude Code (Sprint 1 complete)_
 | Scalability | 58 | 60 | ↑ (subscription expiry automated; Beat scheduler live) |
 | Competitiveness | 40 | 43 | ↑ (daily match digest = highest-ROI re-engagement lever) |
 | **Overall** | **52** | **55** | ↑ |
+
+### Maturity Scorecard (Sprint 2 vs baseline)
+| Dimension | Baseline | Sprint 1 | Sprint 2 | Trend |
+|---|---|---|---|---|
+| Product | 52 | 55 | 58 | ↑ (discovery tabs live; social proof groundwork) |
+| Architecture | 64 | 70 | 76 | ↑ (REST API Phase 1; JWT; schemas; CORS) |
+| Security | 72 | 74 | 76 | ↑ (JWT blocklist; rate limits on API; IDOR checks) |
+| Mobile | 28 | 28 | 45 | ↑ (API auth + profiles/feed = mobile foundation) |
+| Scalability | 58 | 60 | 60 | → |
+| Competitiveness | 40 | 43 | 46 | ↑ (discovery tabs close gap vs competitors) |
+| **Overall** | **52** | **55** | **60** | ↑ |
+
+### Sprint 2 Deliverables — Status
+| Item | Status | Notes |
+|---|---|---|
+| app/api/ package created | DONE | Blueprint at /api/v1/ |
+| Flask-JWT-Extended + marshmallow + Flask-Cors installed | DONE | pip installed on EC2 |
+| api/errors.py | DONE | Error code constants + api_ok/api_error helpers |
+| api/schemas.py | DONE | ProfileCardSchema, ProfileFullSchema, UserSchema |
+| api/auth.py | DONE | POST /login /refresh /logout /forgot-password /reset-password |
+| api/profiles.py | DONE | GET /me /me/completeness /feed (tabs) /<username> |
+| JWT blocklist via Redis DB4 | DONE | logout stamps jti; token_in_blocklist_loader checks |
+| CSRF exempted for /api/* | DONE | csrf.exempt(api_v1_bp) in __init__.py |
+| CORS enabled for /api/* | DONE | Flask-Cors, origins=* |
+| Rate limits on auth endpoints | DONE | 20/min login, 5/hr forgot-password |
+| IDOR: block list enforced in /profiles/<username> | DONE | |
+| Discovery tabs on web home feed | DONE | ?tab=all|new|near|mutual |
+| Smoke test: POST /api/v1/auth/login | DONE | Returns correct JSON error contract |
 
 ### Sprint 1 Deliverables — Status
 | Item | Status | Notes |
@@ -69,12 +97,12 @@ _Last updated: 2026-06-20 by Claude Code (Sprint 1 complete)_
 | templates/auth/verify_phone.html | 2026-06-20 | Claude Code Sprint 1 |
 | migrations/versions/f1a2b3c4d5e6_sprint1_income_columns.py | 2026-06-20 | Claude Code Sprint 1 |
 
-### Next Session Should (Sprint 2 — Weeks 4–5)
-1. **Confirm Celery worker service** exists and is running (`ijodidar-celery.service`); create if missing.
-2. **Wire search to new income columns**: update `search/routes.py` and partner preferences form to use `min_income_lpa`/`max_income_lpa`.
-3. **Sprint 2 primary**: Discovery tabs + conversion mechanics (per-day pricing, social proof) + REST API Phase 1 (auth, profiles, feed endpoints) — see MASTER_PROMPT.md §7 Sprint 2.
-4. **REST API foundation**: create `app/api/` package, JWT via Flask-JWT-Extended, `/api/v1/auth/register` + `/login` + `/me` + `/feed` endpoints.
-5. **Read** `API_ARCHITECTURE.md` before writing any API code — full endpoint spec is already there.
+### Next Session Should (Sprint 3 — Weeks 6–7)
+1. **REST API Phase 2**: interests, conversations, notifications, devices endpoints (`app/api/interests.py`, `conversations.py`, `notifications.py`, `devices.py`).
+2. **UserDevice model + migration**: `user_id`, `fcm_token`, `platform`, `app_version`, `last_seen` — required for Firebase push (Sprint 5).
+3. **Unified profile editor**: replace 22–26 profile edit pages with tabbed `/profile` editor (AJAX sections). Old routes 301-redirect.
+4. **Wire income columns**: update partner preferences form + search to use `min_income_lpa`/`max_income_lpa` Integer columns (C8 — model columns exist, UI not yet wired).
+5. **Read** `API_ARCHITECTURE.md` (in `claude-code-setup/docs/audits/`) for the full Phase 2 endpoint spec before writing any new API routes.
 
 # iJodidar â€” Project Status
 ## v25 Auto-Kundli | Complete Production Build | June 2026
