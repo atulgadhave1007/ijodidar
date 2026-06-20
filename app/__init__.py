@@ -27,12 +27,16 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO
+from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 db         = SQLAlchemy()
 migrate    = Migrate()
 login_mgr  = LoginManager()
 csrf       = CSRFProtect()
 limiter    = Limiter(key_func=get_remote_address)
+jwt        = JWTManager()
+cors_ext   = CORS()
 # async_mode: 'threading' works everywhere (dev+Windows), 'gevent' for production
 # Resolved at runtime based on installed packages
 import os as _os
@@ -67,6 +71,8 @@ def create_app(env='default'):
     csrf.init_app(app)
     limiter.init_app(app)
     socketio.init_app(app)
+    jwt.init_app(app)
+    cors_ext.init_app(app, resources={r'/api/*': {'origins': '*'}})
 
     # ── Blueprints ────────────────────────────────────────────────────
     from app.auth.routes          import auth_bp
@@ -94,6 +100,10 @@ def create_app(env='default'):
     app.register_blueprint(kundli_bp)
     app.register_blueprint(console_bp)
     app.register_blueprint(onboarding_bp)
+
+    from app.api import api_v1_bp
+    app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
+    csrf.exempt(api_v1_bp)   # API uses JWT Bearer tokens, not CSRF cookies
 
     # ── Onboarding gate ──────────────────────────────────────────────────────
     # Force new users to set gender + looking_for before accessing home feed

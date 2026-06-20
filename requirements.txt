@@ -30,6 +30,11 @@ Pillow==11.1.0
 pyotp==2.9.0
 qrcode[pil]==8.0
 
+# ── REST API (JWT auth + serialization + CORS) ──────────────────────────────
+Flask-JWT-Extended==4.7.1
+marshmallow==3.23.2
+Flask-Cors==5.0.0
+
 # ── Monitoring ──────────────────────────────────────────────────────────────
 sentry-sdk[flask]==2.19.2
 

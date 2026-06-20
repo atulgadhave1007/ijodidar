@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -59,6 +60,17 @@ class Config:
     # Install: sudo apt install redis-server -y && sudo systemctl enable redis
     # .env: REDIS_URL=redis://localhost:6379/0
     RATELIMIT_STORAGE_URI = os.environ.get('REDIS_URL', 'memory://')
+
+    # JWT (REST API — Flask-JWT-Extended)
+    JWT_SECRET_KEY             = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'change-me'
+    JWT_ACCESS_TOKEN_EXPIRES   = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES  = timedelta(days=30)
+    JWT_ALGORITHM              = 'HS256'
+    JWT_TOKEN_LOCATION         = ['headers']
+    JWT_HEADER_NAME            = 'Authorization'
+    JWT_HEADER_TYPE            = 'Bearer'
+    # Blocklist: Redis DB4 — populated on logout / password change
+    JWT_REDIS_BLOCKLIST_URL    = os.environ.get('REDIS_URL', 'redis://localhost:6379/4')
 
     # Aadhaar / KYC Verification (Phase 14.2)
     KYC_API_KEY      = os.environ.get('KYC_API_KEY', '')   # Surepass/Signzy/Karza

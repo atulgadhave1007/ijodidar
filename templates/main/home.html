@@ -82,6 +82,21 @@
         </div>
       </div>
 
+      <!-- Discovery tabs -->
+      <div class="ij-card mb-3 p-2 d-flex gap-1 flex-wrap" style="border-radius:12px;">
+        {% set tabs = [('all','All Matches'),('new','New (7d)'),('near','Near Me'),('mutual','Mutual')] %}
+        {% for t_val, t_label in tabs %}
+        <a href="{{ url_for('main.home', tab=t_val) }}"
+           class="btn btn-sm rounded-pill fw-semibold px-3 {% if tab == t_val %}btn-danger{% else %}btn-light text-muted{% endif %}"
+           style="font-size:13px;">
+          {% if t_val == 'new' %}<i class="bi bi-stars me-1"></i>{% endif %}
+          {% if t_val == 'near' %}<i class="bi bi-geo-alt me-1"></i>{% endif %}
+          {% if t_val == 'mutual' %}<i class="bi bi-heart me-1"></i>{% endif %}
+          {{ t_label }}
+        </a>
+        {% endfor %}
+      </div>
+
       {% if not current_user.profile or not current_user.profile.gender %}
       <!-- Incomplete profile nudge -->
       <div class="ij-card p-4 mb-3 d-flex align-items-center gap-3"

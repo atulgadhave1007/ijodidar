@@ -39,6 +39,7 @@ def landing():
 @main_bp.route('/home')
 @login_required
 def home():
+    tab     = request.args.get('tab', 'all')   # all | new | near | mutual
     blocked = _blocked_ids(current_user.id)
     gender      = current_user.profile.gender      if current_user.profile else None
     looking_for = current_user.profile.looking_for if current_user.profile else None
@@ -49,34 +50,59 @@ def home():
              User.id            != current_user.id,
              User.is_active_acc == True,
              User.is_hidden     == False,
-             User.is_staff      == False,   # exclude staff from match feed
+             User.is_staff      == False,
          ))
     if blocked:
         q = q.filter(User.id.notin_(blocked))
-    # Filter by what user is looking for (correct) — not just "not same gender"
     if looking_for:
         q = q.filter(Profile.gender == looking_for)
     elif gender:
-        q = q.filter(Profile.gender != gender)   # fallback if looking_for not set
+        q = q.filter(Profile.gender != gender)
 
-    # Apply partner preferences (religion, marital status, age range)
-    pref = current_user.partner_preference
-    if pref:
-        if pref.religion:
-            q = q.filter(Profile.religion == pref.religion)
-        if pref.marital_status:
-            q = q.filter(Profile.marital_status == pref.marital_status)
-        if pref.manglik:
-            q = q.filter(Profile.manglik == pref.manglik)
-        if pref.min_age or pref.max_age:
-            from datetime import date
-            today = date.today()
-            if pref.min_age:
-                max_dob = f'{today.year - pref.min_age}-12-31'
-                q = q.filter(Profile.date_of_birth <= max_dob)
-            if pref.max_age:
-                min_dob = f'{today.year - pref.max_age}-01-01'
-                q = q.filter(Profile.date_of_birth >= min_dob)
+    # ── Discovery tab filters ─────────────────────────────────────────────
+    if tab == 'new':
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        q = q.filter(User.created_at >= cutoff)
+
+    elif tab == 'near':
+        if current_user.addresses:
+            city_id = current_user.addresses[0].city_id
+            if city_id:
+                q = (q.join(Address, Address.user_id == User.id)
+                      .filter(Address.city_id == city_id))
+
+    elif tab == 'mutual':
+        from app.models import Shortlist
+        my_sl  = {s.shortlisted_id for s in
+                   Shortlist.query.filter_by(user_id=current_user.id).all()}
+        sl_me  = {s.user_id for s in
+                   Shortlist.query.filter_by(shortlisted_id=current_user.id).all()}
+        mutual = list(my_sl & sl_me)
+        if not mutual:
+            return render_template('main/home.html',
+                                   scored_users=[], spotlight_count=0,
+                                   user=current_user, tab=tab,
+                                   has_preferences=bool(current_user.partner_preference))
+        q = q.filter(User.id.in_(mutual))
+
+    elif tab == 'all':
+        # Apply partner preferences only on the "all" tab
+        pref = current_user.partner_preference
+        if pref:
+            if pref.religion:
+                q = q.filter(Profile.religion == pref.religion)
+            if pref.marital_status:
+                q = q.filter(Profile.marital_status == pref.marital_status)
+            if pref.manglik:
+                q = q.filter(Profile.manglik == pref.manglik)
+            if pref.min_age or pref.max_age:
+                today = date.today()
+                if pref.min_age:
+                    max_dob = f'{today.year - pref.min_age}-12-31'
+                    q = q.filter(Profile.date_of_birth <= max_dob)
+                if pref.max_age:
+                    min_dob = f'{today.year - pref.max_age}-01-01'
+                    q = q.filter(Profile.date_of_birth >= min_dob)
 
     # Eager load related data — prevents N+1 queries (was ~320 queries for 80 users)
     q = q.options(
@@ -128,6 +154,7 @@ def home():
                            scored_users=top,
                            spotlight_count=len(top_spotlight),
                            user=current_user,
+                           tab=tab,
                            has_preferences=bool(current_user.partner_preference))
 
 
