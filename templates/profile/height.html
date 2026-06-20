@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Height – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:600px;">
+  <a href="{{ url_for('profile.profile') }}" class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+  <div class="ij-card">
+    <div class="ij-card-header">
+      <div style="font-weight:800;font-size:17px;">Height</div>
+      <div style="font-size:13px;color:var(--text-2);font-weight:400;margin-top:2px;">Your height in centimetres</div>
+    </div>
+    <div class="ij-card-body">
+      <form method="POST">
+  <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Height in cm</label>
+  <div class="input-group" style="max-width:200px;">
+    <input type="number" name="height" class="form-control" min="100" max="250"
+           value="{{ profile.height if profile and profile.height else '' }}"
+           placeholder="e.g. 168" style="border-radius:8px 0 0 8px;padding:10px 14px;border:1.5px solid var(--border);">
+    <span class="input-group-text" style="border-radius:0 8px 8px 0;border:1.5px solid var(--border);border-left:none;background:var(--surface-2);font-weight:600;">cm</span>
+  </div>
+  <div style="font-size:12px;color:var(--text-3);margin-top:6px;">
+    {{ (profile.height / 30.48)|round(1) }} ft (approx) if profile and profile.height}
+  </div>
+  <div class="d-flex gap-3 mt-4">
+  <button type="submit" class="btn-ij-primary" style="padding:11px 28px;border-radius:8px;font-size:14px;">{{ 'Save Changes'|t }}</button>
+  <a href="{{ url_for('profile.profile') }}" class="btn-ij-ghost" style="padding:10px 24px;border-radius:8px;font-size:14px;">{{ 'Cancel'|t }}</a>
+</div>
+</form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}{% endblock %}

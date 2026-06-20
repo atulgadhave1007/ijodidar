@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Hobbies & Interests – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:640px;">
+  <a href="{{ url_for('profile.profile') }}"
+     class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+
+  <div class="ij-card">
+    <div class="ij-card-header">
+      <div style="font-weight:800;font-size:17px;">Hobbies & Interests</div>
+      <div style="font-size:13px;color:var(--text-2);font-weight:400;margin-top:2px;">
+        Select up to 20. Used to improve your match compatibility score.
+      </div>
+    </div>
+    <div class="ij-card-body">
+      <form method="POST">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+          {% for hobby in all_hobbies %}
+          <label style="cursor:pointer;">
+            <input type="checkbox" name="hobbies" value="{{ hobby }}"
+                   {% if hobby in current_hobbies %}checked{% endif %}
+                   style="display:none;" class="hobby-cb">
+            <span class="hobby-chip" style="display:inline-flex;align-items:center;gap:5px;
+                  padding:7px 14px;border-radius:40px;font-size:13px;font-weight:500;
+                  border:1.5px solid {{ 'var(--brand)' if hobby in current_hobbies else 'var(--border)' }};
+                  background:{{ 'var(--brand-alpha)' if hobby in current_hobbies else '#fff' }};
+                  color:{{ 'var(--brand)' if hobby in current_hobbies else 'var(--text-2)' }};
+                  transition:all .12s;">
+              {{ hobby }}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:16px;"
+             id="selectedCount">
+          {{ current_hobbies|length }} / 20 selected
+        </div>
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn-ij-primary"
+                  style="padding:11px 28px;border-radius:8px;font-size:14px;">
+            Save Hobbies
+          </button>
+          <a href="{{ url_for('profile.profile') }}" class="btn-ij-ghost"
+             style="padding:10px 24px;border-radius:8px;font-size:14px;">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.hobby-cb').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const chip  = cb.nextElementSibling;
+    const total = document.querySelectorAll('.hobby-cb:checked').length;
+    if (cb.checked && total > 20) { cb.checked = false; return; }
+    chip.style.border     = cb.checked ? '1.5px solid var(--brand)' : '1.5px solid var(--border)';
+    chip.style.background = cb.checked ? 'var(--brand-alpha)' : '#fff';
+    chip.style.color      = cb.checked ? 'var(--brand)' : 'var(--text-2)';
+    document.getElementById('selectedCount').textContent =
+      document.querySelectorAll('.hobby-cb:checked').length + ' / 20 selected';
+  });
+});
+</script>
+{% endblock %}

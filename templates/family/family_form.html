@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}{% if member %}Edit{% else %}Add{% endif %} Family Member – iJodidar{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:700px;">
+  <a href="{{ url_for('family.family') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <div class="card rounded-4 shadow-sm">
+    <div class="card-body p-4">
+      <h5 class="fw-bold mb-4">{% if member %}Edit{% else %}Add{% endif %} Family Member</h5>
+      <form method="POST">
+
+        <div class="row g-3 mb-3">
+          <!-- Relation Type -->
+          <div class="col-12">
+            <label class="form-label fw-medium">Relation Type</label>
+            <select name="relation_type" class="form-select" required>
+              <option value="">-- Select Relation --</option>
+              {% for rt in relation_types %}
+              <option value="{{ rt.name }}" {% if rt.name == relation_type %}selected{% endif %}>{{ rt.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Personal Details -->
+          <div class="col-md-6"><label class="form-label fw-medium">First Name</label><input type="text" name="first_name" class="form-control" value="{{ member.first_name if member else '' }}" required></div>
+          <div class="col-md-6"><label class="form-label fw-medium">Last Name</label><input type="text" name="last_name" class="form-control" value="{{ member.last_name if member else '' }}" required></div>
+          <div class="col-md-4"><label class="form-label fw-medium">Age</label><input type="number" name="age" class="form-control" min="0" max="120" value="{{ member.age if member else '' }}"></div>
+          <div class="col-md-8">
+            <label class="form-label fw-medium">Marital Status</label>
+            <select name="marital_status" class="form-select" required>
+              <option value="">-- Select --</option>
+              {% for s in ['Never Married','Married','Divorced','Widowed','Separated'] %}
+              <option value="{{ s }}" {% if member and member.marital_status==s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label fw-medium">Occupation</label><input type="text" name="occupation" class="form-control" value="{{ member.occupation if member else '' }}"></div>
+          <div class="col-md-6"><label class="form-label fw-medium">Contact Number</label><input type="tel" name="contact_number" class="form-control" value="{{ member.contact_number if member else '' }}"></div>
+          <div class="col-md-6"><label class="form-label fw-medium">Email</label><input type="email" name="email" class="form-control" value="{{ member.email if member else '' }}"></div>
+        </div>
+
+        <hr class="my-4">
+        <h6 class="fw-semibold mb-3">Address</h6>
+        <div class="row g-3">
+          <div class="col-12"><input type="text" name="address" class="form-control" placeholder="Address Line 1" value="{{ address.address1 if address else '' }}" required></div>
+          <div class="col-12"><input type="text" name="address2" class="form-control" placeholder="Address Line 2 (optional)" value="{{ address.address2 if address else '' }}"></div>
+          <div class="col-md-4">
+            <label class="form-label">Country</label>
+            <select name="country_id" id="countrySelect" class="form-select" required>
+              <option value="">-- Country --</option>
+              {% for c in countries %}<option value="{{ c.id }}" {% if address and address.country_id==c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">State</label>
+            <select name="state_id" id="stateSelect" class="form-select" required
+                    data-selected="{{ address.state_id if address else '' }}">
+              <option value="">-- State --</option>
+              {% for s in states %}<option value="{{ s.id }}" {% if address and address.state_id==s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">City</label>
+            <select name="city_id" id="citySelect" class="form-select" required
+                    data-selected="{{ address.city_id if address else '' }}">
+              <option value="">-- City --</option>
+              {% for c in cities %}<option value="{{ c.id }}" {% if address and address.city_id==c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4"><label class="form-label">ZIP Code</label><input type="text" name="zipcode" class="form-control" value="{{ address.zipcode if address else '' }}" required></div>
+        </div>
+
+        <div class="d-flex gap-3 mt-4">
+          <button type="submit" class="btn btn-danger rounded-pill px-5">Save</button>
+          <a href="{{ url_for('family.family') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+window.locationData = {
+  states: [{% for s in states %}{"id":{{ s.id }},"name":"{{ s.name|e }}","country_id":{{ s.country_id }}}{% if not loop.last %},{% endif %}{% endfor %}],
+  cities: [{% for c in cities %}{"id":{{ c.id }},"name":"{{ c.name|e }}","state_id":{{ c.state_id }}}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+</script>
+<script src="{{ url_for('static', filename='js/location_cascade.js') }}"></script>
+{% endblock %}

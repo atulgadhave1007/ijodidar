@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Delete Account — iJodidar{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:500px;">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">⚠️</div>
+      <h2 style="font-weight:800;color:#dc3545;margin-bottom:4px;">Delete Account</h2>
+      <p style="color:var(--text-2);font-size:13.5px;line-height:1.6;">
+        This will permanently delete your profile, photos, messages, and all personal data.
+        This action <strong>cannot be undone</strong>.
+      </p>
+    </div>
+
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;
+                padding:14px 16px;margin-bottom:20px;font-size:13px;color:#991b1b;">
+      <strong>What will be deleted:</strong>
+      <ul style="padding-left:16px;margin-top:6px;line-height:1.9;">
+        <li>Your profile and all photos</li>
+        <li>Your contact information</li>
+        <li>All messages and conversations</li>
+        <li>All interests sent and received</li>
+        <li>Your membership will be cancelled (no refund)</li>
+      </ul>
+    </div>
+
+    <form method="POST">
+      {{ form.hidden_tag() if form is defined else '' }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:16px;">
+        <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">
+          Type <strong>DELETE</strong> to confirm
+        </label>
+        <input type="text" name="confirm_text" required
+               placeholder="Type DELETE here"
+               style="width:100%;padding:10px 14px;border:1.5px solid #fca5a5;
+                      border-radius:8px;font-size:14px;outline:none;">
+      </div>
+      <button type="submit"
+              style="width:100%;padding:12px;background:#dc3545;color:#fff;
+                     border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
+        Permanently Delete My Account
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:16px;">
+      <a href="{{ url_for('profile.privacy') }}" style="font-size:13px;color:var(--text-3);">
+        Cancel — go back to privacy settings
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

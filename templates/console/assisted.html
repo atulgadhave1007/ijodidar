@@ -1,0 +1,109 @@
+{% extends 'console/_base.html' %}
+{% block title %}Assisted Plans{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Assisted Plan Management</div>
+  <div class="page-sub">Relationship manager assignments and status tracking</div>
+</div>
+
+<div style="display:flex;gap:4px;background:#fff;border:1px solid #e2e8f0;border-radius:40px;
+            padding:4px;width:fit-content;margin-bottom:20px;">
+  {% for s,label in [('all','All'),('pending','Pending'),('active','Active'),('completed','Completed')] %}
+  <a href="{{ url_for('console.assisted', status=s) }}"
+     style="padding:6px 16px;border-radius:40px;font-size:13px;font-weight:600;
+            text-decoration:none;background:{{ 'var(--brand)' if status==s else 'transparent' }};
+            color:{{ '#fff' if status==s else 'var(--muted)' }};">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+<div class="console-card">
+  {% if requests %}
+  <table class="console-table">
+    <thead>
+      <tr><th>User</th><th>Phone</th><th>Status</th><th>Manager</th><th>Requested</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for ar in requests %}
+      <tr>
+        <td>
+          <div style="font-weight:600;">{{ ar.user.full_name }}</div>
+          <div style="font-size:11.5px;color:var(--muted);">{{ ar.user.email }}</div>
+        </td>
+        <td style="font-size:13px;">{{ ar.user.phone or '—' }}</td>
+        <td>
+          <span class="chip
+            {% if ar.status=='active' %}chip-green
+            {% elif ar.status=='pending' %}chip-yellow
+            {% elif ar.status=='completed' %}chip-blue
+            {% else %}chip-grey{% endif %}" style="font-size:11px;">
+            {{ ar.status|title }}
+          </span>
+        </td>
+        <td style="font-size:13px;">{{ ar.assigned_manager or '—' }}</td>
+        <td style="color:var(--muted);font-size:12px;">{{ ar.created_at.strftime('%d %b %Y') }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size:11.5px;"
+                  data-bs-toggle="modal" data-bs-target="#editModal{{ ar.id }}">
+            Manage
+          </button>
+        </td>
+      </tr>
+
+      <!-- Edit modal -->
+      <div class="modal fade" id="editModal{{ ar.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header border-0">
+              <h5 class="modal-title fw-bold">{{ ar.user.full_name }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+              <form method="POST" action="{{ url_for('console.update_assisted', req_id=ar.id) }}">
+                <div class="row g-3">
+                  <div class="col-6">
+                    <label class="form-label" style="font-size:12px;font-weight:600;color:var(--muted);">STATUS</label>
+                    <select name="status" class="form-select" style="border-radius:8px;">
+                      {% for s in ['pending','active','completed','cancelled'] %}
+                      <option value="{{ s }}" {{ 'selected' if ar.status==s }}>{{ s|title }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label" style="font-size:12px;font-weight:600;color:var(--muted);">MANAGER PHONE</label>
+                    <input type="text" name="manager_phone" class="form-control"
+                           value="{{ ar.manager_phone or '' }}" style="border-radius:8px;">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" style="font-size:12px;font-weight:600;color:var(--muted);">ASSIGNED MANAGER NAME</label>
+                    <input type="text" name="manager" class="form-control"
+                           value="{{ ar.assigned_manager or '' }}" style="border-radius:8px;">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" style="font-size:12px;font-weight:600;color:var(--muted);">NOTES</label>
+                    <textarea name="notes" class="form-control" rows="3"
+                              style="border-radius:8px;">{{ ar.notes or '' }}</textarea>
+                  </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                  <button type="submit" class="btn btn-danger rounded-pill px-4">Save</button>
+                  <button type="button" class="btn btn-outline-secondary rounded-pill"
+                          data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center;padding:48px;color:var(--muted);">
+    <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:10px;opacity:.3;"></i>
+    No {{ status if status != 'all' else '' }} assisted requests yet
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

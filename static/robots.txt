@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /search
+Disallow: /admin/
+Disallow: /messages
+Disallow: /notifications/
+Disallow: /plans/create-order
+Disallow: /plans/verify-payment
+Disallow: /webhook/
+
+Sitemap: https://ijodidar.in/sitemap.xml

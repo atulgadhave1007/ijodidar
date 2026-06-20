@@ -1,0 +1,275 @@
+{% extends 'console/_base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-start justify-content-between">
+  <div>
+    <div class="page-title">Business Dashboard</div>
+    <div class="page-sub">Welcome back, {{ admin.name }} · {{ admin.role_label }}</div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);">
+    <i class="bi bi-clock me-1"></i>{{ now.strftime('%d %b %Y, %I:%M %p') if now else '' }}
+  </div>
+</div>
+
+<!-- KPI GRID -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid var(--brand);">
+      <div class="kpi-num" style="color:var(--brand);" data-live="total_users">{{ total_users }}</div>
+      <div class="kpi-label">Total Users</div>
+      <div class="kpi-trend" style="color:var(--muted);">
+        <i class="bi bi-arrow-up-short text-success"></i>{{ new_this_week }} this week
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid #16a34a;">
+      <div class="kpi-num" style="color:#16a34a;">{{ verified_users }}</div>
+      <div class="kpi-label">Email Verified</div>
+      <div class="kpi-trend" style="color:var(--muted);">
+        {{ ((verified_users/total_users*100)|round(1)) if total_users else 0 }}% of total
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid #2563eb;">
+      <div class="kpi-num" style="color:#2563eb;">{{ paying_users }}</div>
+      <div class="kpi-label">Paying Users</div>
+      <div class="kpi-trend" style="color:var(--muted);">{{ ((paying_users/total_users*100)|round(1)) if total_users else 0 }}% conversion</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid #7c3aed;">
+      <div class="kpi-num" style="color:#7c3aed;">₹{{ "{:,}".format(revenue_month) }}</div>
+      <div class="kpi-label">Revenue (30 days)</div>
+      <div class="kpi-trend" style="color:var(--muted);">₹{{ "{:,}".format(revenue_total) }} all time</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid #f59e0b;">
+      <div class="kpi-num" style="color:#f59e0b;">{{ total_matches }}</div>
+      <div class="kpi-label">Matches Made</div>
+      <div class="kpi-trend" style="color:var(--muted);">accepted interests</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card" style="border-left:3px solid #dc2626;">
+      <div class="kpi-num" data-live="pending_reports"
+           style="color:{% if pending_reports > 0 %}#dc2626{% else %}#16a34a{% endif %};">
+        {{ pending_reports }}
+      </div>
+      <div class="kpi-label">Pending Reports</div>
+      <div class="kpi-trend">
+        <a href="{{ url_for('console.reports') }}"
+           style="color:#dc2626;font-size:11px;text-decoration:none;">Review →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2: Sparkline + Gender + Plans -->
+<div class="row g-3 mb-4">
+  <!-- Registration trend -->
+  <div class="col-lg-5">
+    <div class="console-card">
+      <div class="console-card-header">
+        Registrations — Last 7 Days
+        <span style="font-size:12px;color:var(--muted);font-weight:400;">{{ reg_trend|sum }} total</span>
+      </div>
+      <div style="padding:16px 20px;">
+        <div class="sparkline-wrap">
+          {% set maxv = reg_trend|max if reg_trend|max > 0 else 1 %}
+          {% for count, day in zip(reg_trend, days7) %}
+          <div class="sparkline-bar" title="{{ day }}: {{ count }} users"
+               style="height:{{ [((count/maxv)*80)|int, 4]|max }}px;
+                      background:{{ 'rgba(214,48,49,.7)' if loop.last else 'rgba(214,48,49,.2)' }};"></div>
+          {% endfor %}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          {% for day in days7 %}
+          <span style="font-size:9px;color:var(--muted);">{{ day[-6:] }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender split -->
+  <div class="col-lg-3">
+    <div class="console-card">
+      <div class="console-card-header">Gender Split</div>
+      <div style="padding:16px 20px;">
+        {% set total_g = male_count + female_count %}
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;">👨 Male</span>
+            <span style="font-size:12px;font-weight:700;color:#2563eb;">{{ male_count }}</span>
+          </div>
+          <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;background:#2563eb;border-radius:3px;
+                 width:{{ ((male_count/total_g*100)|round|int) if total_g else 50 }}%;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:600;">👩 Female</span>
+            <span style="font-size:12px;font-weight:700;color:var(--brand);">{{ female_count }}</span>
+          </div>
+          <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;background:var(--brand);border-radius:3px;
+                 width:{{ ((female_count/total_g*100)|round|int) if total_g else 50 }}%;"></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px;">
+          Ratio: {{ male_count }}M : {{ female_count }}F
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan distribution -->
+  <div class="col-lg-4">
+    <div class="console-card">
+      <div class="console-card-header">Active Plan Distribution</div>
+      <div style="padding:8px 20px 16px;">
+        {% for plan_name, count in plan_dist %}
+        {% set pct = ((count/(plan_dist|sum(attribute=1))*100)|round|int) if plan_dist else 0 %}
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;
+                    border-bottom:1px solid #f1f5f9;">
+          <span style="font-weight:600;font-size:13px;width:80px;">{{ plan_name }}</span>
+          <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;background:{% if plan_name=='Platinum' %}#7c3aed{% elif plan_name=='Gold' %}#f59e0b{% elif plan_name=='Silver' %}#2563eb{% else %}#94a3b8{% endif %};
+                 border-radius:3px;width:{{ pct }}%;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;min-width:28px;text-align:right;">{{ count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Users + Quick Actions -->
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="console-card">
+      <div class="console-card-header">
+        Recently Registered Users
+        <a href="{{ url_for('console.users') }}"
+           style="font-size:12px;color:var(--brand);text-decoration:none;font-weight:600;">
+          View All →
+        </a>
+      </div>
+      <div class="console-card-body">
+        <table class="console-table">
+          <thead>
+            <tr><th>User</th><th>Plan</th><th>Verified</th><th>Joined</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for u in recent_users %}
+            <tr>
+              <td>
+                <div style="font-weight:600;">{{ u.full_name }}</div>
+                <div style="font-size:11.5px;color:var(--muted);">{{ u.email }}</div>
+              </td>
+              <td>
+                <span class="chip {{ 'chip-green' if u.plan_name != 'Free' else 'chip-grey' }}">
+                  {{ u.plan_name }}
+                </span>
+              </td>
+              <td>
+                {% if u.is_verified %}
+                <span class="chip chip-green"><i class="bi bi-check"></i>Email</span>
+                {% else %}
+                <span class="chip chip-red"><i class="bi bi-x"></i>Unverified</span>
+                {% endif %}
+              </td>
+              <td style="color:var(--muted);font-size:12px;">
+                {{ u.created_at.strftime('%d %b') }}
+              </td>
+              <td>
+                <a href="{{ url_for('console.user_detail', user_id=u.id) }}"
+                   style="font-size:12px;color:var(--brand);text-decoration:none;font-weight:600;">
+                  View →
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="col-lg-4">
+    <div class="console-card">
+      <div class="console-card-header">Quick Actions</div>
+      <div style="padding:12px;">
+        {% if admin.can('reports') %}
+        <a href="{{ url_for('console.reports') }}"
+           style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                  background:#fef2f2;border-radius:8px;text-decoration:none;margin-bottom:8px;
+                  color:#991b1b;font-weight:600;font-size:13px;">
+          <i class="bi bi-flag-fill"></i>
+          {{ pending_reports }} Report{{ 's' if pending_reports != 1 }} Pending
+          <i class="bi bi-arrow-right ms-auto"></i>
+        </a>
+        {% endif %}
+        {% if admin.can('assisted') %}
+        <a href="{{ url_for('console.assisted') }}?status=pending"
+           style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                  background:#fefce8;border-radius:8px;text-decoration:none;margin-bottom:8px;
+                  color:#854d0e;font-weight:600;font-size:13px;">
+          <i class="bi bi-people-fill"></i>
+          {{ assisted_pending }} Assisted Pending
+          <i class="bi bi-arrow-right ms-auto"></i>
+        </a>
+        {% endif %}
+        {% if admin.can('users') %}
+        <a href="{{ url_for('console.users') }}?filter=unverified"
+           style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                  background:#f0f9ff;border-radius:8px;text-decoration:none;margin-bottom:8px;
+                  color:#1e40af;font-weight:600;font-size:13px;">
+          <i class="bi bi-envelope-slash"></i>
+          Unverified Email Users
+          <i class="bi bi-arrow-right ms-auto"></i>
+        </a>
+        {% endif %}
+        {% if admin.can('analytics') %}
+        <a href="{{ url_for('console.analytics') }}"
+           style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                  background:#f0fdf4;border-radius:8px;text-decoration:none;
+                  color:#166534;font-weight:600;font-size:13px;">
+          <i class="bi bi-graph-up-arrow"></i>Full Analytics
+          <i class="bi bi-arrow-right ms-auto"></i>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Staff info -->
+    <div class="console-card mt-3">
+      <div class="console-card-header">Your Access Level</div>
+      <div style="padding:14px;">
+        <div class="role-badge role-{{ admin.role }} mb-2">{{ admin.role_label }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;">
+          {% set perms = admin.PERMISSIONS.get(admin.role, set()) %}
+          {% for p in ['dashboard','analytics','revenue','users','reports','assisted','staff','plans'] %}
+          <div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
+            <i class="bi bi-{{ 'check-circle-fill' if p in perms else 'x-circle-fill' }}"
+               style="color:{{ '#16a34a' if p in perms else '#e2e8f0' }};font-size:.75rem;"></i>
+            <span style="{{ '' if p in perms else 'color:#e2e8f0;' }}">{{ p|title }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Jinja can't do zip so handle in JS — sparkline already rendered inline
+</script>
+{% endblock %}

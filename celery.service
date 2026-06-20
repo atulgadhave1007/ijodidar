@@ -1,0 +1,21 @@
+[Unit]
+Description=iJodidar Celery Worker
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ijodidar
+EnvironmentFile=/home/ubuntu/ijodidar/.env
+ExecStart=/home/ubuntu/ijodidar/venv/bin/celery \
+    -A app.tasks.celery worker \
+    --loglevel=info \
+    --concurrency=2 \
+    --queues=email,sms,notifications,uploads,celery \
+    --logfile=/var/log/ijodidar/celery.log \
+    --pidfile=/tmp/celery.pid
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

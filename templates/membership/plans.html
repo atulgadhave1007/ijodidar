@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Membership Plans – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:900px;">
+  <div class="text-center mb-5">
+    <h1 style="font-size:2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;">{{ 'Membership Plans'|t }}</h1>
+    <p style="color:var(--text-2);font-size:15px;">Upgrade to connect more, unlock all features.</p>
+    {% if current_sub %}
+    <div class="d-inline-flex align-items-center gap-2 mt-3 px-4 py-2"
+         style="background:var(--green-bg);color:var(--green);border-radius:40px;font-weight:600;font-size:13.5px;">
+      <i class="bi bi-check-circle-fill"></i>
+      {{ 'Current Plan'|t }}: {{ current_sub.plan.name }}
+      {% if current_sub.expires_at %} · Expires {{ current_sub.expires_at.strftime('%d %b %Y') }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4 justify-content-center mb-5">
+    {% for plan in plans %}
+    <div class="col-md-6 col-lg-3">
+      <div class="plan-card {{ 'featured' if plan.highlighted else '' }} h-100">
+        {% if plan.highlighted %}
+        <div style="background:var(--brand);color:#fff;text-align:center;
+                    padding:8px;font-size:11px;font-weight:700;letter-spacing:.06em;">
+          ⭐ MOST POPULAR
+        </div>
+        {% endif %}
+        <div class="plan-header">
+          <div style="font-weight:800;font-size:16px;margin-bottom:4px;">{{ plan.name }}</div>
+          {% if plan.price_inr == 0 %}
+          <div class="plan-price">Free<span style="font-size:1rem;color:var(--text-2);font-weight:500;"> forever</span></div>
+          {% else %}
+          <div class="plan-price">₹{{ plan.price_inr }}<span style="font-size:.9rem;color:var(--text-2);font-weight:500;"> / {{ plan.duration_days }}d</span></div>
+          {% endif %}
+        </div>
+        <div class="plan-body">
+          <p style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">{{ plan.description or '' }}</p>
+          {% for yes,label in [
+            (True, (plan.max_interests|string + '/mo interests') if plan.max_interests else 'Unlimited interests'),
+            (plan.can_message, 'Messaging enabled'),
+            (plan.can_view_phone, 'View phone numbers'),
+            (True, 'Full profile access'),
+          ] %}
+          <div class="plan-feature {{ 'yes' if yes else 'no' }}">
+            <i class="bi bi-{{ 'check-circle-fill' if yes else 'x-circle' }}"></i>
+            <span>{{ label }}</span>
+          </div>
+          {% endfor %}
+
+          <div style="margin-top:16px;">
+            {% if current_sub and current_sub.plan.name == plan.name %}
+            <button disabled class="btn-ij-ghost w-100 justify-content-center"
+                    style="padding:10px;border-radius:8px;opacity:.6;cursor:not-allowed;">
+              <i class="bi bi-check-lg me-1"></i>Current Plan
+            </button>
+            {% elif plan.price_inr == 0 %}
+            <button disabled class="btn-ij-ghost w-100 justify-content-center"
+                    style="padding:10px;border-radius:8px;opacity:.5;cursor:not-allowed;">
+              {{ 'Free Forever'|t }}
+            </button>
+            {% else %}
+            <button class="pay-btn {{ 'btn-ij-primary' if plan.highlighted else 'btn-ij-outline' }} w-100 justify-content-center"
+                    data-plan-id="{{ plan.id }}" data-plan-name="{{ plan.name }}"
+                    data-amount="{{ plan.price_inr * 100 }}"
+                    style="padding:10px;border-radius:8px;">
+              <i class="bi bi-lightning-fill me-1"></i>{{ 'Upgrade Now'|t }}
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Assisted Plan Banner -->
+  <div class="ij-card p-4 mb-5"
+       style="background:linear-gradient(135deg,#fdf4ff,#f5f3ff);border:1.5px solid #d8b4fe;">
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      <div style="font-size:2.5rem;">🤝</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-weight:800;font-size:17px;margin-bottom:4px;">
+          Assisted Plan — ₹2,999/month
+        </div>
+        <div style="font-size:13.5px;color:var(--text-2);line-height:1.6;">
+          A dedicated relationship manager handles your profile, sends you 5 curated matches
+          every week via WhatsApp, and follows up with families on your behalf.
+          Perfect for busy professionals and NRIs.
+        </div>
+      </div>
+      <a href="{{ url_for('membership.assisted_plan') }}"
+         class="btn-ij-primary flex-shrink-0"
+         style="background:var(--purple);border:none;padding:12px 24px;border-radius:10px;">
+        <i class="bi bi-people-fill me-2"></i>Learn More
+      </a>
+    </div>
+  </div>
+
+  <!-- Trust row -->
+  <div class="row g-3 text-center">
+    {% for icon,text in [
+      ('shield-lock-fill','256-bit SSL'),('arrow-counterclockwise','7-day Refund'),
+      ('headset','24/7 Support'),('bank','RBI-compliant'),
+    ] %}
+    <div class="col-6 col-md-3">
+      <div style="font-size:13px;color:var(--text-2);">
+        <i class="bi bi-{{ icon }} d-block mb-1" style="font-size:1.3rem;color:var(--brand);"></i>
+        {{ text }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if razorpay_key %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.querySelectorAll('.pay-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const planId = btn.dataset.planId;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:14px;height:14px;border-width:2px;"></span>Loading…';
+    try {
+      const res   = await fetch(`/plans/create-order/${planId}`, {method:'POST'});
+      const order = await res.json();
+      if (order.error) { alert(order.error); btn.disabled=false; return; }
+      const rzp = new Razorpay({
+        key: '{{ razorpay_key }}', amount: order.amount, currency: order.currency,
+        name: 'iJodidar', description: `${btn.dataset.planName} Plan`,
+        order_id: order.order_id,
+        prefill: {name: order.user_name, email: order.user_email, contact: order.user_phone},
+        theme: {color: '#d63031'},
+        handler: async r => {
+          const v = await fetch('/plans/verify-payment', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({...r, plan_id: planId})
+          });
+          const d = await v.json();
+          if (d.success) window.location.href = d.redirect;
+          else alert('Verification failed. Contact support.');
+        },
+        modal: {ondismiss: () => { btn.disabled=false; btn.innerHTML='<i class="bi bi-lightning-fill me-1"></i>Upgrade Now'; }}
+      });
+      rzp.open();
+    } catch(e) { alert('Error. Please try again.'); btn.disabled=false; }
+  });
+});
+</script>
+{% else %}
+<script>
+document.querySelectorAll('.pay-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    window.location.href = `/plans/upgrade/${btn.dataset.planId}`;
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

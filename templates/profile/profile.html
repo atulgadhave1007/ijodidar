@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% block title %}Personal Info – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:860px;">
+  <div class="d-flex gap-4 align-items-start">
+
+    <!-- Settings sidebar -->
+    <div class="ij-sidebar d-none d-lg-block" style="width:200px;">
+      <div class="ij-card p-2">
+        <div style="padding:8px 12px 6px;font-size:11px;font-weight:700;color:var(--text-3);
+                    text-transform:uppercase;letter-spacing:.08em;">Settings</div>
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-link active">
+          <i class="bi bi-person-circle"></i>Personal Info
+        </a>
+        <a href="{{ url_for('family.family') }}" class="sidebar-link">
+          <i class="bi bi-people-fill"></i>My Family
+        </a>
+        <a href="{{ url_for('profile.partner_preferences') }}" class="sidebar-link">
+          <i class="bi bi-heart"></i>Partner Prefs
+        </a>
+        <a href="{{ url_for('profile.privacy') }}" class="sidebar-link">
+          <i class="bi bi-shield-lock-fill"></i>Privacy
+        </a>
+        <a href="{{ url_for('profile.referral') }}" class="sidebar-link">
+          <i class="bi bi-gift-fill"></i>Refer & Earn
+        </a>
+        <a href="{{ url_for('membership.plans') }}" class="sidebar-link">
+          <i class="bi bi-star-fill" style="color:#f59e0b;"></i>Upgrade Plan
+        </a>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div style="flex:1;min-width:0;">
+      <!-- Page header -->
+      <div class="ij-card mb-3 p-4 d-flex align-items-center gap-4">
+        <div class="ij-avatar xl" style="border:3px solid white;box-shadow:var(--shadow-sm);
+             cursor:pointer;" data-bs-toggle="modal" data-bs-target="#uploadModal">
+          {% set pri = current_user.profile_images|selectattr('is_primary','equalto',True)|first %}
+          {% if pri %}<img src="{{ pri.image_url }}" alt="">
+          {% else %}{{ current_user.first_name[0] }}{{ current_user.last_name[0] }}{% endif %}
+          <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;
+               background:var(--brand);border-radius:50%;border:2px solid #fff;
+               display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-camera-fill" style="color:#fff;font-size:.7rem;"></i>
+          </div>
+        </div>
+        <div>
+          <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:3px;">Personal Info</h1>
+          <p style="font-size:13.5px;color:var(--text-2);margin:0;">
+            Manage the information visible on your iJodidar profile
+          </p>
+        </div>
+      </div>
+
+      {% macro chevron() %}
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="color:var(--border);flex-shrink:0;">
+        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+      </svg>
+      {% endmacro %}
+
+      {% macro section_card(title, desc) %}
+      <div class="ij-card mb-3">
+        <div style="padding:16px 20px 10px;">
+          <div style="font-weight:700;font-size:14.5px;color:var(--text);">{{ title }}</div>
+          <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">{{ desc }}</div>
+        </div>
+      {% endmacro %}
+
+      <!-- BASIC INFO -->
+      {{ section_card('Basic Info', 'Your core personal details') }}
+        <a href="{{ url_for('profile.name') }}" class="settings-row">
+          <span class="settings-label">Name</span>
+          <span class="settings-value">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.birthday') }}" class="settings-row">
+          <span class="settings-label">Birthday</span>
+          <span class="settings-value">{% if profile and profile.date_of_birth %}{{ profile.date_of_birth }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.gender') }}" class="settings-row">
+          <span class="settings-label">Gender</span>
+          <span class="settings-value">{% if profile and profile.gender %}{{ profile.gender }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.looking_for') }}" class="settings-row">
+          <span class="settings-label">Looking For</span>
+          <span class="settings-value">{% if profile and profile.looking_for %}{{ profile.looking_for }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.height') }}" class="settings-row">
+          <span class="settings-label">Height</span>
+          <span class="settings-value">{% if profile and profile.height %}{{ profile.height }} cm{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.bio') }}" class="settings-row">
+          <span class="settings-label">About Me</span>
+          <span class="settings-value" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:340px;">{% if profile and profile.bio %}{{ profile.bio }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- RELIGION & COMMUNITY -->
+      {{ section_card('Religion & Community', 'Used for matching and search filters') }}
+        <a href="{{ url_for('profile.religion') }}" class="settings-row">
+          <span class="settings-label">Religion</span>
+          <span class="settings-value">{% if profile and profile.religion %}{{ profile.religion }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.religion') }}" class="settings-row">
+          <span class="settings-label">Caste / Sub-caste</span>
+          <span class="settings-value">{% if profile and profile.caste %}{{ profile.caste }}{% if profile.sub_caste %} / {{ profile.sub_caste }}{% endif %}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.religion') }}" class="settings-row">
+          <span class="settings-label">Mother Tongue</span>
+          <span class="settings-value">{% if profile and profile.mother_tongue %}{{ profile.mother_tongue }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.religion') }}" class="settings-row">
+          <span class="settings-label">Marathi Sub-Caste</span>
+          <span class="settings-value">{% if profile and profile.marathi_sub_caste %}{{ profile.marathi_sub_caste }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.religion') }}" class="settings-row">
+          <span class="settings-label">Gotra</span>
+          <span class="settings-value">{% if profile and profile.gotra %}{{ profile.gotra }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('kundli.edit_kundli') }}" class="settings-row">
+          <span class="settings-label">Kundli / Nakshatra</span>
+          <span class="settings-value">
+            {% if profile and profile.birth_nakshatra %}
+              <span style="color:var(--green);font-weight:600;"><i class="bi bi-stars me-1" style="color:#f59e0b;"></i>{{ profile.birth_nakshatra }} · {{ profile.birth_rashi or '' }}</span>
+            {% else %}
+              <span style="color:var(--text-3);">Add for Guna Milan matching</span>
+            {% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- LIFESTYLE -->
+      {{ section_card('Lifestyle', 'Diet, habits, and family background') }}
+        <a href="{{ url_for('profile.lifestyle') }}" class="settings-row">
+          <span class="settings-label">Marital Status</span>
+          <span class="settings-value">{% if profile and profile.marital_status %}{{ profile.marital_status }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.lifestyle') }}" class="settings-row">
+          <span class="settings-label">Diet</span>
+          <span class="settings-value">{% if profile and profile.diet %}{{ profile.diet }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.lifestyle') }}" class="settings-row">
+          <span class="settings-label">Family Type</span>
+          <span class="settings-value">{% if profile and profile.family_type %}{{ profile.family_type }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- CONTACT -->
+      {{ section_card('Contact Info', 'Email and phone numbers') }}
+        <a href="{{ url_for('profile.email') }}" class="settings-row">
+          <span class="settings-label">Email</span>
+          <span class="settings-value">
+            {{ current_user.email }}
+            {% if current_user.is_verified %}<span class="chip chip-verified ms-2" style="font-size:10px;"><i class="bi bi-patch-check-fill"></i></span>
+            {% else %}<span class="chip ms-2" style="background:#fef3c7;color:#92400e;font-size:10px;">Unverified</span>{% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.phone') }}" class="settings-row">
+          <span class="settings-label">Phone</span>
+          <span class="settings-value">
+            {{ current_user.phone or '' }}
+            {% if current_user.phone_verified %}<span class="chip chip-phone ms-2" style="font-size:10px;"><i class="bi bi-shield-fill-check"></i></span>{% endif %}
+            {% if not current_user.phone %}<span style="color:var(--text-3);">Not set</span>{% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- ADDRESSES -->
+      {{ section_card('Addresses', 'Permanent, current, and work addresses') }}
+        {% for tag_name, addr_obj in [('Permanent', permanent), ('Current', current), ('Work', work)] %}
+        <a href="{{ url_for('profile.address', tag=tag_name.lower()) }}" class="settings-row">
+          <span class="settings-label">{{ tag_name }} Address</span>
+          <span class="settings-value">{% if addr_obj and addr_obj.city %}{{ addr_obj.city.name }}, {{ addr_obj.state.name }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- WORK & EDUCATION -->
+      {{ section_card('Work & Education', 'Professional and academic information') }}
+        <a href="{{ url_for('profile.professional') }}" class="settings-row">
+          <span class="settings-label">Occupation</span>
+          <span class="settings-value">{% if professional and professional.occupation %}{{ professional.occupation }}{% if professional.company_name %} at {{ professional.company_name }}{% endif %}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.education') }}" class="settings-row">
+          <span class="settings-label">Education</span>
+          <span class="settings-value">{% if education and education.degree %}{{ education.degree }}{% if education.specialization %} · {{ education.specialization }}{% endif %}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.language') }}" class="settings-row">
+          <span class="settings-label">Languages</span>
+          <span class="settings-value">{% if current_user.languages %}{{ current_user.languages|length }} added{% else %}<span style="color:var(--text-3);">None</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.hobbies') }}" class="settings-row">
+          <span class="settings-label">Hobbies & Interests</span>
+          <span class="settings-value">
+            {% if profile and profile.hobbies %}
+              {% set hlist = profile.hobbies | from_json %}
+              {{ hlist|length }} selected
+            {% else %}<span style="color:var(--text-3);">None added</span>{% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.nri_status') }}" class="settings-row">
+          <span class="settings-label">NRI Status</span>
+          <span class="settings-value">
+            {% if profile and profile.is_nri %}
+              <span class="chip chip-verified"><i class="bi bi-globe me-1"></i>NRI · {{ profile.nri_country or 'Abroad' }}</span>
+            {% else %}<span style="color:var(--text-3);">Based in India</span>{% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- PARTNER PREFERENCES -->
+      {{ section_card('Partner Preferences', 'What you are looking for in a match') }}
+        {% set pref = current_user.partner_preference %}
+        <a href="{{ url_for('profile.partner_preferences') }}" class="settings-row">
+          <span class="settings-label">Age Range</span>
+          <span class="settings-value">{% if pref and pref.min_age %}{{ pref.min_age }} – {{ pref.max_age or 55 }} yrs{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.partner_preferences') }}" class="settings-row">
+          <span class="settings-label">Religion / Caste</span>
+          <span class="settings-value">{% if pref and pref.religion %}{{ pref.religion }}{% if pref.caste %} / {{ pref.caste }}{% endif %}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.partner_preferences') }}" class="settings-row">
+          <span class="settings-label">Location</span>
+          <span class="settings-value">{% if pref and pref.location_preference %}{{ pref.location_preference }}{% else %}<span style="color:var(--text-3);">Not set</span>{% endif %}</span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+      <!-- PRIVACY & MORE -->
+      {{ section_card('Privacy & Visibility', 'Control your profile visibility') }}
+        <a href="{{ url_for('profile.privacy') }}" class="settings-row">
+          <span class="settings-label">Profile Visibility</span>
+          <span class="settings-value">
+            {% if current_user.is_hidden %}
+            <span class="chip" style="background:var(--amber-bg);color:var(--amber);"><i class="bi bi-eye-slash me-1"></i>Hidden</span>
+            {% else %}
+            <span class="chip chip-verified"><i class="bi bi-eye me-1"></i>Visible</span>
+            {% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('auth.verify_id') }}" class="settings-row">
+          <span class="settings-label">ID Verification</span>
+          <span class="settings-value">
+            {% if profile and profile.id_verified %}
+            <span class="chip" style="background:#fff5c0;color:#78350f;font-size:11px;">
+              <i class="bi bi-patch-check-fill me-1"></i>Aadhaar Verified ✅
+            </span>
+            {% else %}
+            <span style="color:var(--brand);font-weight:600;font-size:13px;">
+              Verify with Aadhaar — get trust badge
+            </span>
+            {% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('profile.referral') }}" class="settings-row">
+          <span class="settings-label">Refer & Earn</span>
+          <span class="settings-value" style="color:var(--brand);font-weight:600;">
+            <i class="bi bi-gift-fill me-1"></i>Share link, earn Silver plan free
+          </span>
+          {{ chevron() }}
+        </a>
+        <a href="{{ url_for('membership.spotlight') }}" class="settings-row">
+          <span class="settings-label">Spotlight</span>
+          <span class="settings-value">
+            {% if profile and profile.is_spotlight %}<span class="chip chip-spotlight"><i class="bi bi-star-fill me-1"></i>Active</span>
+            {% else %}<span style="color:var(--text-3);">₹199/week — top of search</span>{% endif %}
+          </span>
+          {{ chevron() }}
+        </a>
+      </div>
+
+    </div><!-- /main -->
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:var(--r-xl);border:none;box-shadow:var(--shadow-lg);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" style="font-weight:700;">Upload Profile Photo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pb-4">
+        <input type="file" id="imageInput" accept="image/jpeg,image/png" class="form-control mb-3"
+               style="border-radius:8px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;margin-bottom:12px;">
+          <input class="form-check-input" type="checkbox" id="isPrimary" checked style="accent-color:var(--brand);">
+          Set as profile picture
+        </label>
+        <div id="cropContainer" class="d-none mb-3" style="border:1px solid var(--border);border-radius:8px;max-height:300px;overflow:hidden;">
+          <img id="cropImage" style="max-width:100%;"></div>
+        <div id="cropToolbar" class="d-none d-flex gap-2 mb-3">
+          <button class="btn-ij-ghost" onclick="zoomCrop(.1)" style="padding:5px 12px;font-size:12px;">Zoom In</button>
+          <button class="btn-ij-ghost" onclick="zoomCrop(-.1)" style="padding:5px 12px;font-size:12px;">Zoom Out</button>
+          <button class="btn-ij-ghost" onclick="resetCrop()" style="padding:5px 12px;font-size:12px;color:var(--brand);">Reset</button>
+        </div>
+        <div class="progress d-none mb-3" id="uploadProgressWrapper" style="height:5px;border-radius:3px;">
+          <div class="progress-bar" id="uploadProgressBar" style="background:var(--brand);width:0%;"></div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button" class="btn-ij-ghost" data-bs-dismiss="modal">Cancel</button>
+          <button id="uploadBtn" class="btn-ij-primary" style="padding:10px 24px;border-radius:8px;">Upload Photo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="{{ url_for('static', filename='js/upload_cropper.js') }}"></script>
+{% endblock %}

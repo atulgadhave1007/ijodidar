@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}You're all set — iJodidar{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:480px;text-align:center;">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:48px 32px;">
+    <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
+    <h1 style="font-weight:800;font-size:1.6rem;margin-bottom:8px;">You're all set!</h1>
+    <p style="color:var(--text-2);font-size:14px;line-height:1.7;margin-bottom:32px;">
+      Your profile is ready. We've found matches based on your preferences.
+      You can always update your profile to get even better matches.
+    </p>
+    <a href="{{ url_for('main.home') }}" class="btn-ij-primary"
+       style="padding:14px 36px;font-size:16px;border-radius:12px;display:inline-block;">
+      See Your Matches <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+    <div style="margin-top:16px;">
+      <a href="{{ url_for('profile.profile') }}" style="font-size:13px;color:var(--text-3);">
+        Complete your profile for more responses →
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

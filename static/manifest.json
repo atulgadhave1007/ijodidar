@@ -1,0 +1,21 @@
+{
+  "name": "iJodidar — Find Your Match",
+  "short_name": "iJodidar",
+  "description": "India's trusted matrimony platform. Find your perfect match.",
+  "start_url": "/home",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#dc3545",
+  "lang": "en-IN",
+  "icons": [
+    { "src": "/static/images/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["social", "lifestyle"],
+  "shortcuts": [
+    { "name": "Search Profiles", "url": "/search",    "icons": [{"src": "/static/images/icon-192.png","sizes": "192x192"}] },
+    { "name": "My Interests",    "url": "/interests",  "icons": [{"src": "/static/images/icon-192.png","sizes": "192x192"}] },
+    { "name": "Messages",        "url": "/messages",   "icons": [{"src": "/static/images/icon-192.png","sizes": "192x192"}] }
+  ]
+}

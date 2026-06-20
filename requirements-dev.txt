@@ -1,0 +1,6 @@
+# Install this on Windows for local dev:
+#   pip install -r requirements-dev.txt
+-r requirements.txt
+
+# Windows-compatible async for SocketIO
+# (gevent causes issues on Windows — threading is used automatically in dev mode)

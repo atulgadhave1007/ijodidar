@@ -1,0 +1,70 @@
+{% extends 'onboarding/base_step.html' %}
+{% set title = "A bit about you" %}
+{% block step_content %}
+<h2 style="font-weight:800;font-size:1.3rem;margin-bottom:4px;">A bit about you</h2>
+<p style="color:var(--text-2);font-size:13.5px;margin-bottom:24px;">
+  Profiles with date of birth get 3× more matches.
+</p>
+
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div style="margin-bottom:18px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Date of Birth</label>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr;gap:8px;">
+      <select name="month" class="form-select" style="border-radius:8px;">
+        <option value="">Month</option>
+        {% for m in range(1,13) %}
+        <option value="{{ m }}" {% if profile and profile.date_of_birth and profile.date_of_birth[5:7]|int == m %}selected{% endif %}>
+          {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+        </option>
+        {% endfor %}
+      </select>
+      <select name="day" class="form-select" style="border-radius:8px;">
+        <option value="">Day</option>
+        {% for d in range(1,32) %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
+      <select name="year" class="form-select" style="border-radius:8px;">
+        <option value="">Year</option>
+        {% set cur_year = 2026 %}
+        {% for y in range(cur_year - 18, cur_year - 65, -1) %}
+        <option value="{{ y }}">{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-bottom:18px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Religion</label>
+    <select name="religion" class="form-select" style="border-radius:8px;">
+      <option value="">Select religion</option>
+      {% for r in religions %}
+      <option value="{{ r }}" {% if profile and profile.religion == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:28px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Marital Status</label>
+    <select name="marital_status" class="form-select" style="border-radius:8px;">
+      <option value="">Select status</option>
+      {% for s in marital %}
+      <option value="{{ s }}" {% if profile and profile.marital_status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button type="submit" name="skip" value="1"
+            style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:10px;
+                   background:#fff;font-weight:600;font-size:14px;cursor:pointer;color:var(--text-2);">
+      Skip for now
+    </button>
+    <button type="submit" class="btn-ij-primary" style="flex:2;padding:12px;border-radius:10px;font-size:15px;">
+      Continue <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}Religion & Community – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:640px;">
+  <a href="{{ url_for('profile.profile') }}"
+     class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+
+  <div class="ij-card">
+    <div class="ij-card-header">
+      <div style="font-weight:800;font-size:17px;">Religion & Community</div>
+      <div style="font-size:13px;color:var(--text-2);font-weight:400;margin-top:2px;">
+        Used for matching, search filters, and Gotra compatibility checks
+      </div>
+    </div>
+    <div class="ij-card-body">
+      <form method="POST" id="religionForm">
+
+        <div class="row g-3">
+          <!-- Religion -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Religion</label>
+            <select name="religion" id="religionSelect" class="form-select"
+                    style="border-radius:8px;border:1.5px solid var(--border);"
+                    onchange="toggleMarathiSection()">
+              <option value="">-- Select --</option>
+              {% for r in ['Hindu','Muslim','Christian','Sikh','Buddhist','Jain','Parsi','Jewish','No Religion','Other'] %}
+              <option value="{{ r }}" {% if profile and profile.religion==r %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Mother Tongue -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Mother Tongue</label>
+            <select name="mother_tongue" class="form-select"
+                    style="border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">-- Select --</option>
+              {% for lang in ['Marathi','Hindi','Gujarati','Bengali','Tamil','Telugu','Kannada','Malayalam','Punjabi','Odia','Urdu','English','Other'] %}
+              <option value="{{ lang }}" {% if profile and profile.mother_tongue==lang %}selected{% endif %}>{{ lang }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Caste (free text) -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Caste</label>
+            <input type="text" name="caste" class="form-control"
+                   value="{{ profile.caste or '' if profile else '' }}"
+                   placeholder="e.g. Brahmin, Kshatriya, Maratha"
+                   style="border-radius:8px;border:1.5px solid var(--border);">
+          </div>
+
+          <!-- Marathi Sub-Caste dropdown — shown for Hindu/Jain -->
+          <div class="col-md-6" id="marathiSubCasteDiv">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">
+              Marathi Sub-Caste
+              <span style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 7px;
+                           border-radius:4px;font-weight:700;margin-left:4px;">Maharashtra</span>
+            </label>
+            <select name="marathi_sub_caste" class="form-select"
+                    style="border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">-- Select --</option>
+              {% for name, group in marathi_sub_castes %}
+              <option value="{{ name }}"
+                {% if profile and profile.marathi_sub_caste==name %}selected{% endif %}>
+                {{ name }} <span style="color:var(--text-3);">({{ group }})</span>
+              </option>
+              {% endfor %}
+            </select>
+            <div style="font-size:11.5px;color:var(--text-2);margin-top:4px;">
+              Select your specific Marathi community for better matches
+            </div>
+          </div>
+
+          <!-- Gotra — with Sapinda warning -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">
+              Gotra
+              <span style="background:var(--brand-alpha);color:var(--brand);font-size:10px;
+                           padding:1px 7px;border-radius:4px;font-weight:700;margin-left:4px;">
+                Sapinda Check
+              </span>
+            </label>
+            <input type="text" name="gotra" id="gotraInput" class="form-control"
+                   value="{{ profile.gotra or '' if profile else '' }}"
+                   placeholder="e.g. Kashyap, Bharadwaj, Atreya"
+                   style="border-radius:8px;border:1.5px solid var(--border);">
+            <div style="font-size:11.5px;color:var(--text-2);margin-top:4px;">
+              Used to check Sapinda incompatibility during matching
+            </div>
+          </div>
+
+          <!-- Sub-Caste (free text backup) -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">
+              Sub-Caste <span style="font-weight:400;color:var(--text-3);">(optional)</span>
+            </label>
+            <input type="text" name="sub_caste" class="form-control"
+                   value="{{ profile.sub_caste or '' if profile else '' }}"
+                   placeholder="Further specification"
+                   style="border-radius:8px;border:1.5px solid var(--border);">
+          </div>
+
+          <!-- Manglik -->
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Manglik</label>
+            <select name="manglik" class="form-select"
+                    style="border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">-- Select --</option>
+              {% for m in ['Yes','No','Partial / Anshik'] %}
+              <option value="{{ m }}" {% if profile and profile.manglik==m %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- NRI toggle -->
+          <div class="col-12">
+            <div class="d-flex align-items-center gap-3 p-3"
+                 style="border:1.5px solid var(--border);border-radius:10px;">
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:13.5px;">NRI / Abroad Based</div>
+                <div style="font-size:12px;color:var(--text-2);">
+                  Living outside India? NRI profiles get a special badge and better visibility.
+                </div>
+              </div>
+              <label style="cursor:pointer;display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" name="is_nri" value="1"
+                       {% if profile and profile.is_nri %}checked{% endif %}
+                       style="width:18px;height:18px;accent-color:var(--brand);"
+                       onchange="toggleNriCountry(this)">
+                <span style="font-size:13px;font-weight:600;">Yes</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6" id="nriCountryDiv"
+               style="{{ '' if profile and profile.is_nri else 'display:none;' }}">
+            <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">Country</label>
+            <input type="text" name="nri_country" class="form-control"
+                   value="{{ profile.nri_country or '' if profile else '' }}"
+                   placeholder="e.g. USA, UK, Australia, UAE"
+                   style="border-radius:8px;border:1.5px solid var(--border);">
+          </div>
+        </div>
+
+        <!-- Gotra warning panel (hidden, shown by JS if same gotra detected) -->
+        <div id="gotraWarning" class="d-none mt-3 p-3"
+             style="background:#fef3c7;border:1.5px solid #fde047;border-radius:10px;">
+          <div class="d-flex gap-3">
+            <i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;font-size:1.2rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-weight:700;font-size:13.5px;color:#92400e;">Gotra Note</div>
+              <div style="font-size:12.5px;color:#78350f;margin-top:2px;">
+                Your Gotra will be checked against potential matches. If two Hindu profiles
+                share the same Gotra, a Sapinda incompatibility warning will be shown on
+                the match. This follows traditional Brahmin and Maratha customs.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-4">
+          <button type="submit" class="btn-ij-primary"
+                  style="padding:11px 28px;border-radius:8px;font-size:14px;">
+            Save Changes
+          </button>
+          <a href="{{ url_for('profile.profile') }}" class="btn-ij-ghost"
+             style="padding:10px 24px;border-radius:8px;font-size:14px;">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleMarathiSection() {
+  const rel = document.getElementById('religionSelect').value;
+  const div = document.getElementById('marathiSubCasteDiv');
+  const show = ['Hindu','Jain',''].includes(rel);
+  div.style.opacity = show ? '1' : '0.4';
+}
+
+function toggleNriCountry(cb) {
+  document.getElementById('nriCountryDiv').style.display = cb.checked ? '' : 'none';
+}
+
+// Show gotra info panel when user types in gotra field
+document.getElementById('gotraInput').addEventListener('blur', () => {
+  const val = document.getElementById('gotraInput').value.trim();
+  document.getElementById('gotraWarning').classList.toggle('d-none', !val);
+});
+
+toggleMarathiSection();
+</script>
+{% endblock %}

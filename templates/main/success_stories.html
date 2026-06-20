@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Success Stories – iJodidar{% endblock %}
+{% block og_tags %}
+<meta property="og:title" content="iJodidar Success Stories — Real Couples, Real Matches">
+<meta property="og:description" content="Read real stories of couples who found their match on iJodidar.">
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <!-- Hero -->
+  <div class="text-center mb-5">
+    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 mb-3">
+      💑 Real Stories
+    </span>
+    <h2 class="fw-bold mb-2">Love Found on iJodidar</h2>
+    <p class="text-muted" style="max-width:500px;margin:0 auto;">
+      Thousands of families have found their perfect match. Here are some of their stories.
+    </p>
+  </div>
+
+  {% if stories %}
+  <div class="row g-4">
+    {% for s in stories %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card rounded-4 shadow-sm h-100">
+        {% if s.photo_url %}
+        <img src="{{ s.photo_url }}" class="card-img-top rounded-top-4"
+             style="height:220px;object-fit:cover;">
+        {% else %}
+        <div class="rounded-top-4 bg-danger bg-opacity-10 d-flex align-items-center
+                    justify-content-center" style="height:160px;">
+          <i class="bi bi-heart-fill text-danger" style="font-size:3rem;opacity:.4;"></i>
+        </div>
+        {% endif %}
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h5 class="fw-bold mb-0">{{ s.groom_name }} &amp; {{ s.bride_name }}</h5>
+              {% if s.city %}
+              <div class="text-muted small">
+                <i class="bi bi-geo-alt me-1"></i>{{ s.city }}
+                {% if s.wedding_year %} &bull; {{ s.wedding_year }}{% endif %}
+              </div>
+              {% endif %}
+            </div>
+            <i class="bi bi-quote text-danger" style="font-size:1.8rem;opacity:.3;"></i>
+          </div>
+          <p class="text-muted small mb-0" style="line-height:1.7;">
+            {{ s.story[:220] }}{% if s.story|length > 220 %}…{% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- No stories yet — call to action -->
+  <div class="text-center py-5">
+    <i class="bi bi-heart-fill text-danger d-block mb-3" style="font-size:3rem;opacity:.3;"></i>
+    <h5 class="fw-semibold mb-2">Stories Coming Soon!</h5>
+    <p class="text-muted mb-4">Be the first to find your match on iJodidar and share your story.</p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-danger rounded-pill px-5 fw-semibold">
+      Register Free <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- CTA banner -->
+  {% if stories %}
+  <div class="card rounded-4 bg-danger text-white text-center p-5 mt-5">
+    <h3 class="fw-bold mb-2">Your Story Could Be Next</h3>
+    <p class="mb-4 opacity-75">Join thousands who found love on iJodidar.</p>
+    <a href="{{ url_for('auth.register') }}"
+       class="btn btn-light text-danger fw-semibold rounded-pill px-5">
+      Start Your Journey
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

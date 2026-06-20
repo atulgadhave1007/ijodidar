@@ -1,0 +1,90 @@
+{% extends 'console/_base.html' %}
+{% block title %}2FA Setup{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Two-Factor Authentication</div>
+  <div class="page-sub">Secure your console account with Google Authenticator</div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" style="border-radius:10px;margin-bottom:16px;">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success" style="border-radius:10px;margin-bottom:16px;">{{ success }}</div>
+{% endif %}
+
+<div class="console-card" style="max-width:560px;">
+
+  {% if not admin.totp_enabled %}
+  <h3 style="font-weight:700;font-size:1rem;margin-bottom:16px;">
+    <i class="bi bi-shield-x" style="color:#dc3545;margin-right:6px;"></i>
+    2FA is currently DISABLED for your account
+  </h3>
+
+  {% if not admin.totp_secret %}
+  <p style="color:var(--muted);font-size:13.5px;line-height:1.7;margin-bottom:20px;">
+    Enable two-factor authentication to protect your console access.
+    You'll need the Google Authenticator app on your phone.
+  </p>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="generate">
+    <button type="submit" class="btn btn-primary rounded-pill px-4">
+      <i class="bi bi-qr-code me-2"></i>Set Up Google Authenticator
+    </button>
+  </form>
+  {% else %}
+  <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+    <div>
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px;">
+        <strong>Step 1:</strong> Scan this QR code with Google Authenticator
+      </p>
+      {% if qr_data_url %}
+      <img src="{{ qr_data_url }}" style="width:180px;border:4px solid #fff;border-radius:8px;">
+      {% endif %}
+    </div>
+    <div style="flex:1;min-width:220px;">
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px;">
+        <strong>Step 2:</strong> Enter the 6-digit code to confirm setup
+      </p>
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="enable">
+        <input type="text" name="totp_code" maxlength="6" pattern="[0-9]{6}"
+               placeholder="000000" class="form-control mb-3" style="font-size:1.3rem;
+               letter-spacing:8px;text-align:center;font-weight:700;"
+               autofocus inputmode="numeric" required>
+        <button type="submit" class="btn btn-success rounded-pill px-4 w-100">
+          <i class="bi bi-shield-check me-2"></i>Enable 2FA
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <h3 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--green);">
+    <i class="bi bi-shield-fill-check" style="margin-right:6px;"></i>
+    2FA is ACTIVE on your account
+  </h3>
+  <p style="color:var(--muted);font-size:13.5px;margin-bottom:20px;">
+    Enabled: {{ admin.totp_verified_at.strftime('%d %b %Y') if admin.totp_verified_at else 'Yes' }}
+  </p>
+  <p style="color:var(--muted);font-size:13.5px;margin-bottom:12px;">
+    To disable 2FA, enter your current authenticator code:
+  </p>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="disable">
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="text" name="totp_code" maxlength="6" pattern="[0-9]{6}"
+             placeholder="000000" class="form-control" style="font-size:1.1rem;
+             letter-spacing:6px;font-weight:700;max-width:160px;" inputmode="numeric" required>
+      <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+        Disable 2FA
+      </button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

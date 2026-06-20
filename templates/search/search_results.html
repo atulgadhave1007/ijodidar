@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}Search Profiles – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container">
+  <div class="d-flex gap-4 align-items-start">
+
+    <!-- Filter Sidebar -->
+    <div class="ij-sidebar d-none d-lg-block">
+      <div class="ij-card">
+        <div class="ij-card-header d-flex align-items-center justify-content-between">
+          <span>{{ 'Filters'|t }}</span>
+          <a href="{{ url_for('search.search_profiles') }}"
+             style="font-size:12px;color:var(--brand);font-weight:600;text-decoration:none;">{{ 'Clear All'|t }}</a>
+        </div>
+        <div class="ij-card-body p-0">
+          <form method="GET" action="{{ url_for('search.search_profiles') }}" id="sideFilterForm">
+            <div style="padding:16px 16px 8px;">
+
+              {% macro fgroup(label) %}<div style="margin-bottom:16px;"><label style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px;">{{ label }}</label>{% endmacro %}
+              {% macro fend() %}</div>{% endmacro %}
+
+              {{ fgroup('Keyword') }}
+              <input type="text" name="keyword" value="{{ args.get('keyword','') }}"
+                     placeholder="Name, city, company…"
+                     style="width:100%;border:1.5px solid var(--border);border-radius:8px;
+                            padding:8px 12px;font-size:13px;outline:none;"
+                     oninput="this.form.submit()">
+              {{ fend() }}
+
+              {{ fgroup('Gender') }}
+              {% for val,label in [('','Any'),('Male','Male'),('Female','Female')] %}
+              <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;">
+                <input type="radio" name="gender" value="{{ val }}"
+                       {% if args.get('gender','') == val %}checked{% endif %}
+                       style="accent-color:var(--brand);" onchange="this.form.submit()">
+                {{ label }}
+              </label>
+              {% endfor %}
+              {{ fend() }}
+
+              {{ fgroup('Age Range') }}
+              <div class="d-flex gap-2 align-items-center">
+                <input type="number" name="min_age" value="{{ args.get('min_age','') }}"
+                       placeholder="18" min="18" max="80"
+                       style="width:70px;border:1.5px solid var(--border);border-radius:8px;
+                              padding:6px 8px;font-size:13px;">
+                <span style="color:var(--text-3);font-size:12px;">to</span>
+                <input type="number" name="max_age" value="{{ args.get('max_age','') }}"
+                       placeholder="60" min="18" max="80"
+                       style="width:70px;border:1.5px solid var(--border);border-radius:8px;
+                              padding:6px 8px;font-size:13px;">
+              </div>
+              {{ fend() }}
+
+              {{ fgroup('Religion') }}
+              <select name="religion" style="width:100%;border:1.5px solid var(--border);border-radius:8px;
+                     padding:8px 12px;font-size:13px;" onchange="this.form.submit()">
+                {% for r in religions %}
+                <option value="{{ r }}" {% if args.get('religion')==r %}selected{% endif %}>{{ r or 'Any' }}</option>
+                {% endfor %}
+              </select>
+              {{ fend() }}
+
+              {{ fgroup('City') }}
+              <input type="text" name="city" value="{{ args.get('city','') }}"
+                     placeholder="Mumbai, Pune…"
+                     style="width:100%;border:1.5px solid var(--border);border-radius:8px;
+                            padding:8px 12px;font-size:13px;">
+              {{ fend() }}
+
+              {{ fgroup('Marital Status') }}
+              <select name="marital_status" style="width:100%;border:1.5px solid var(--border);border-radius:8px;
+                     padding:8px 12px;font-size:13px;" onchange="this.form.submit()">
+                {% for s in marital_statuses %}
+                <option value="{{ s }}" {% if args.get('marital_status')==s %}selected{% endif %}>{{ s or 'Any' }}</option>
+                {% endfor %}
+              </select>
+              {{ fend() }}
+
+              {{ fgroup('Height (cm)') }}
+              <div class="d-flex gap-2 align-items-center">
+                <input type="number" name="min_height" value="{{ args.get('min_height','') }}"
+                       placeholder="150" min="140" max="220"
+                       style="width:70px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;">
+                <span style="color:var(--text-3);font-size:12px;">to</span>
+                <input type="number" name="max_height" value="{{ args.get('max_height','') }}"
+                       placeholder="190" min="140" max="220"
+                       style="width:70px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;">
+              </div>
+              {{ fend() }}
+
+              {{ fgroup('Diet') }}
+              <select name="diet" style="width:100%;border:1.5px solid var(--border);border-radius:8px;
+                     padding:8px 12px;font-size:13px;" onchange="this.form.submit()">
+                <option value="">Any</option>
+                {% for d in ['Vegetarian','Non-Vegetarian','Eggetarian','Vegan','Jain'] %}
+                <option value="{{ d }}" {% if args.get('diet')==d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+              </select>
+              {{ fend() }}
+
+              <button type="submit" class="btn-ij-primary w-100 justify-content-center"
+                      style="padding:10px;border-radius:8px;font-size:13.5px;">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div style="flex:1;min-width:0;">
+      <!-- Mobile filter toggle -->
+      <div class="d-lg-none mb-3">
+        <button class="btn-ij-ghost w-100 justify-content-center"
+                data-bs-toggle="collapse" data-bs-target="#mobileFilters">
+          <i class="bi bi-sliders me-2"></i>Filters & Search
+        </button>
+        <div class="collapse mt-2" id="mobileFilters">
+          <div class="ij-card p-3">
+            <form method="GET" action="{{ url_for('search.search_profiles') }}">
+              <div class="row g-2 mb-2">
+                <div class="col-12">
+                  <input type="text" name="keyword" class="form-control" placeholder="Name, city, occupation…"
+                         value="{{ args.get('keyword','') }}">
+                </div>
+                <div class="col-6">
+                  <select name="gender" class="form-select">
+                    <option value="">Any gender</option>
+                    <option value="Male" {% if args.get('gender')=='Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if args.get('gender')=='Female' %}selected{% endif %}>Female</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <input type="text" name="city" class="form-control" placeholder="City"
+                         value="{{ args.get('city','') }}">
+                </div>
+              </div>
+              <button type="submit" class="btn-ij-primary w-100 justify-content-center"
+                      style="padding:10px;border-radius:8px;">Search</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results header -->
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <span style="font-size:15px;font-weight:700;">
+            {% if results %}{{ results|length }} Profile{{ 's' if results|length!=1 }}{% else %}Search Profiles{% endif %}
+          </span>
+          {% if args and results %}
+          <span style="font-size:13px;color:var(--text-2);margin-left:8px;">matching your filters</span>
+          {% endif %}
+        </div>
+        {% if results %}
+        <div style="font-size:13px;color:var(--text-2);">
+          <select name="sort" form="sideFilterForm" onchange="this.form.submit()"
+                  style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:13px;">
+            <option value="newest" {% if args.get('sort','newest')=='newest' %}selected{% endif %}>Newest first</option>
+            <option value="oldest" {% if args.get('sort')=='oldest' %}selected{% endif %}>Oldest first</option>
+          </select>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Result cards -->
+      {% if results %}
+      <div class="d-flex flex-column gap-3">
+        {% for u in results %}
+        {% set uimg = u.profile_images | selectattr('is_primary','equalto',True) | first %}
+        <a href="{{ url_for('main.user_profile', username=u.username) }}"
+           class="search-result-card {{ 'spotlight-card' if u.profile and u.profile.is_spotlight else '' }}">
+          {% if u.profile and u.profile.is_spotlight %}
+          <div style="position:absolute;top:-1px;left:24px;background:#f59e0b;color:#000;
+               font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:0 0 6px 6px;">
+            ⭐ Featured
+          </div>
+          {% endif %}
+          <!-- Avatar -->
+          <div class="ij-avatar lg" style="flex-shrink:0;">
+            {% if uimg %}<img src="{{ uimg.image_url }}" alt="">
+            {% else %}{{ u.first_name[0] }}{{ u.last_name[0] }}{% endif %}
+          </div>
+          <!-- Info -->
+          <div style="flex:1;min-width:0;">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <span style="font-weight:700;font-size:15px;">{{ u.full_name }}</span>
+              {% if u.is_verified %}<span class="chip chip-verified"><i class="bi bi-patch-check-fill"></i></span>{% endif %}
+              {% if u.phone_verified %}<span class="chip chip-phone"><i class="bi bi-shield-fill-check"></i></span>{% endif %}
+            </div>
+            <div style="font-size:13px;color:var(--text-2);">
+              {% if u.profile %}
+                {% if u.profile.date_of_birth %}{{ u.profile.date_of_birth|age }} yrs{% endif %}
+                {% if u.profile.gender %} · {{ u.profile.gender }}{% endif %}
+                {% if u.profile.religion %} · {{ u.profile.religion }}{% endif %}
+                {% if u.profile.marital_status %} · {{ u.profile.marital_status }}{% endif %}
+              {% endif %}
+            </div>
+            <div style="font-size:13px;color:var(--text-2);margin-top:4px;">
+              {% if u.addresses and u.addresses[0].city %}
+              <i class="bi bi-geo-alt" style="font-size:.8rem;margin-right:3px;"></i>
+              {{ u.addresses[0].city.name }}, {{ u.addresses[0].state.name }}
+              {% endif %}
+              {% if u.professional_details and u.professional_details[0].occupation %}
+              <span style="margin:0 6px;color:var(--border);">·</span>
+              <i class="bi bi-briefcase" style="font-size:.8rem;margin-right:3px;"></i>
+              {{ u.professional_details[0].occupation }}
+              {% if u.professional_details[0].company_name %} at {{ u.professional_details[0].company_name }}{% endif %}
+              {% endif %}
+            </div>
+            {% if u.educations and u.educations[0].degree %}
+            <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">
+              <i class="bi bi-mortarboard" style="font-size:.8rem;margin-right:3px;"></i>
+              {{ u.educations[0].degree }}{% if u.educations[0].specialization %} · {{ u.educations[0].specialization }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          <!-- Shortlist btn -->
+          <button class="shortlist-btn nav-icon-btn" data-user-id="{{ u.id }}"
+                  title="Shortlist" onclick="event.preventDefault();event.stopPropagation();"
+                  style="flex-shrink:0;align-self:center;">
+            <i class="bi bi-bookmark" style="font-size:.9rem;"></i>
+          </button>
+        </a>
+        {% endfor %}
+      </div>
+
+      {% elif args %}
+      <div class="ij-card p-5 text-center">
+        <div class="ij-avatar lg mx-auto mb-3" style="background:var(--brand-alpha);">
+          <i class="bi bi-search" style="font-size:1.8rem;color:var(--brand);"></i>
+        </div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px;">No profiles found</div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
+          Try fewer or broader filters.
+        </div>
+        <a href="{{ url_for('search.search_profiles') }}" class="btn-ij-ghost">Clear all filters</a>
+      </div>
+      {% else %}
+      <div class="ij-card p-5 text-center">
+        <div class="ij-avatar lg mx-auto mb-3" style="background:var(--brand-alpha);">
+          <i class="bi bi-people" style="font-size:1.8rem;color:var(--brand);"></i>
+        </div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px;">Find your perfect match</div>
+        <div style="font-size:13px;color:var(--text-2);">Use the filters to search profiles.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.shortlist-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const uid = btn.dataset.userId;
+    try {
+      const r = await fetch(`/shortlist/toggle/${uid}`, {method:'POST'});
+      const d = await r.json();
+      const i = btn.querySelector('i');
+      i.className = d.action === 'added' ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+      i.style.color = d.action === 'added' ? 'var(--brand)' : '';
+    } catch(e){}
+  });
+});
+</script>
+{% endblock %}

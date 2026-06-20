@@ -1,0 +1,156 @@
+{% extends 'console/_base.html' %}
+{% block title %}Staff & Roles{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <div class="page-title">Staff & Roles</div>
+    <div class="page-sub">Manage console access for your team</div>
+  </div>
+  <button class="btn btn-danger rounded-pill" style="font-size:13px;padding:8px 18px;"
+          data-bs-toggle="modal" data-bs-target="#addStaffModal">
+    <i class="bi bi-plus me-1"></i>Add Staff Member
+  </button>
+</div>
+
+<!-- Role reference -->
+<div class="console-card mb-4">
+  <div class="console-card-header">Role Permissions Reference</div>
+  <div style="overflow-x:auto;">
+    <table class="console-table">
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>CEO</th><th>VP</th><th>Business Owner</th>
+          <th>Rel. Manager</th><th>Executive</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for perm in ['Dashboard','Analytics','Revenue','Users','Plans','Reports','Assisted','Staff Management'] %}
+        {% set pk = perm.lower().replace(' management','') %}
+        <tr>
+          <td style="font-weight:600;">{{ perm }}</td>
+          {% for role, perms in [
+            ('ceo', ['dashboard','analytics','revenue','users','plans','reports','assisted','staff']),
+            ('vp',  ['dashboard','analytics','users','reports','assisted']),
+            ('business_owner', ['dashboard','analytics','revenue','plans','reports']),
+            ('relationship_manager', ['dashboard','assisted']),
+            ('executive', ['dashboard','users','reports']),
+          ] %}
+          <td style="text-align:center;">
+            {% if pk in perms %}
+            <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+            {% else %}
+            <i class="bi bi-x-circle-fill" style="color:#e2e8f0;"></i>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Staff list -->
+<div class="console-card">
+  <div class="console-card-header">Active Staff ({{ staff_list|length }})</div>
+  <div class="console-card-body">
+    <table class="console-table">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in staff_list %}
+        <tr>
+          <td style="font-weight:600;">
+            {{ s.name }}
+            {% if s.id == admin.id %}
+            <span style="font-size:10px;color:var(--muted);">(you)</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--muted);font-size:12.5px;">{{ s.email }}</td>
+          <td><span class="role-badge role-{{ s.role }}">{{ s.role_label }}</span></td>
+          <td style="color:var(--muted);font-size:12px;">
+            {{ s.last_login.strftime('%d %b %Y, %I:%M %p') if s.last_login else 'Never' }}
+          </td>
+          <td>
+            <span class="chip {{ 'chip-green' if s.is_active else 'chip-red' }}">
+              {{ 'Active' if s.is_active else 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            {% if s.id != admin.id %}
+            <form method="POST" action="{{ url_for('console.toggle_staff', staff_id=s.id) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('{{ 'Deactivate' if s.is_active else 'Activate' }} {{ s.name }}?')">
+              <button class="btn btn-sm {{ 'btn-outline-danger' if s.is_active else 'btn-outline-success' }} rounded-pill"
+                      style="font-size:11.5px;padding:3px 12px;">
+                {{ 'Deactivate' if s.is_active else 'Activate' }}
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:1px solid #e2e8f0;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Add Staff Member</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pb-4">
+        <form method="POST" action="{{ url_for('console.add_staff') }}">
+          <div class="mb-3">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">
+              FULL NAME
+            </label>
+            <input type="text" name="name" class="form-control" required
+                   style="border-radius:8px;" placeholder="Rahul Sharma">
+          </div>
+          <div class="mb-3">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">
+              EMAIL
+            </label>
+            <input type="email" name="email" class="form-control" required
+                   style="border-radius:8px;" placeholder="rahul@ijodidar.in">
+          </div>
+          <div class="mb-3">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">
+              ROLE
+            </label>
+            <select name="role" class="form-select" style="border-radius:8px;">
+              <option value="executive">Executive — User management + Reports</option>
+              <option value="relationship_manager">Relationship Manager — Assisted Plans only</option>
+              <option value="vp">VP — Analytics + Users + Reports</option>
+              <option value="business_owner">Business Owner — Analytics + Revenue + Plans</option>
+              <option value="ceo">CEO — Full Access</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">
+              TEMPORARY PASSWORD
+            </label>
+            <input type="password" name="password" class="form-control" required
+                   minlength="8" style="border-radius:8px;" placeholder="Min 8 characters">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+              Staff member should change this on first login.
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-danger rounded-pill px-4">Add Staff</button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill"
+                    data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

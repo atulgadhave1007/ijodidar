@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}About Me – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:600px;">
+  <a href="{{ url_for('profile.profile') }}" class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+  <div class="ij-card">
+    <div class="ij-card-header">
+      <div style="font-weight:800;font-size:17px;">About Me</div>
+      <div style="font-size:13px;color:var(--text-2);font-weight:400;margin-top:2px;">Write a short intro about yourself</div>
+    </div>
+    <div class="ij-card-body">
+      <form method="POST">
+  <label class="form-label" style="font-weight:600;font-size:13px;color:var(--text-2);">About Me</label>
+  <textarea name="bio" class="form-control" rows="5" maxlength="500"
+            placeholder="Write a short introduction about yourself, your interests, and what you are looking for…"
+            style="border-radius:8px;border:1.5px solid var(--border);padding:12px 14px;resize:vertical;">{{ profile.bio if profile else '' }}</textarea>
+  <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">Max 500 characters</div>
+  <div class="d-flex gap-3 mt-4">
+  <button type="submit" class="btn-ij-primary" style="padding:11px 28px;border-radius:8px;font-size:14px;">{{ 'Save Changes'|t }}</button>
+  <a href="{{ url_for('profile.profile') }}" class="btn-ij-ghost" style="padding:10px 24px;border-radius:8px;font-size:14px;">{{ 'Cancel'|t }}</a>
+</div>
+</form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}{% endblock %}

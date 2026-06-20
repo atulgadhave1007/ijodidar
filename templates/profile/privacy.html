@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Settings – iJodidar{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <a href="{{ url_for('profile.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      <h5 class="fw-bold mb-4"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Privacy & Visibility</h5>
+
+      <!-- Hide from search -->
+      <div class="card rounded-4 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start justify-content-between gap-3">
+            <div>
+              <h6 class="fw-bold mb-1">Hide Profile from Search</h6>
+              <p class="text-muted small mb-0">
+                When hidden, your profile won't appear in search results or browsing.
+                People who already have your link can still view it.
+                Your current conversations and interests are not affected.
+              </p>
+            </div>
+            <form method="POST">
+              <input type="hidden" name="action" value="toggle_hide">
+              <div class="form-check form-switch" style="transform:scale(1.3);margin-top:4px;">
+                <input class="form-check-input" type="checkbox" id="hideToggle"
+                       onchange="this.form.submit()" {% if user.is_hidden %}checked{% endif %}>
+              </div>
+            </form>
+          </div>
+          {% if user.is_hidden %}
+          <div class="alert alert-warning rounded-3 small mt-3 mb-0">
+            <i class="bi bi-eye-slash me-2"></i>Your profile is currently <strong>hidden</strong> from search results.
+          </div>
+          {% else %}
+          <div class="alert alert-success rounded-3 small mt-3 mb-0">
+            <i class="bi bi-eye me-2"></i>Your profile is <strong>visible</strong> in search results.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Blocked users list -->
+      <div class="card rounded-4 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Blocked Profiles</h6>
+          {% set blocks = user.blocks_made %}
+          {% if blocks %}
+          {% for b in blocks %}
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <a href="{{ url_for('main.user_profile', username=b.blocked.username) }}"
+               class="text-dark text-decoration-none small fw-medium">
+              {{ b.blocked.full_name }}
+            </a>
+            <form method="POST" action="{{ url_for('connect.unblock_user', target_id=b.blocked_id) }}">
+              <button class="btn btn-sm btn-outline-danger rounded-pill">Unblock</button>
+            </form>
+          </div>
+          {% endfor %}
+          {% else %}
+          <p class="text-muted small mb-0">You haven't blocked anyone.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Danger zone: deactivate -->
+      <div class="card rounded-4 border-danger shadow-sm">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-danger mb-1">Deactivate Account</h6>
+          <p class="text-muted small mb-3">
+            Deactivating will hide your profile and log you out. Your data is saved.
+            Contact support to reactivate. This action cannot be undone easily.
+          </p>
+          <button class="btn btn-outline-danger rounded-pill btn-sm" data-bs-toggle="modal" data-bs-target="#deactivateModal">
+            <i class="bi bi-person-x me-2"></i>Deactivate Account
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Deactivate Confirm Modal -->
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content rounded-4">
+      <div class="modal-body text-center p-4">
+        <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+             style="width:52px;height:52px;">
+          <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+        </div>
+        <h6 class="fw-bold mb-2">Deactivate Account?</h6>
+        <p class="text-muted small mb-3">You will be logged out. Your profile will be hidden from all users.</p>
+        <form method="POST">
+          <input type="hidden" name="action" value="deactivate">
+          <button type="submit" class="btn btn-danger rounded-pill w-100 mb-2 fw-semibold">Yes, Deactivate</button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill w-100" data-bs-dismiss="modal">Cancel</button>
+        </form>
+    <hr style="margin:24px 0;border-color:var(--border);">
+    <div>
+      <h6 style="font-weight:700;color:#dc3545;margin-bottom:6px;">Permanent Deletion</h6>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">
+        Permanently delete your account and all personal data. This cannot be undone.
+      </p>
+      <hr style="margin:16px 0;border-color:var(--border);">
+      <h6 style="font-weight:700;margin-bottom:6px;">Download Your Data</h6>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">
+        Download a copy of all your personal data stored on iJodidar (DPDP Act 2023).
+      </p>
+      <a href="{{ url_for('profile.export_data') }}"
+         style="display:inline-block;padding:8px 20px;background:#2563eb;color:#fff;
+                border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;
+                margin-bottom:16px;">
+        <i class="bi bi-download me-1"></i> Download My Data (JSON)
+      </a>
+
+      <a href="{{ url_for('profile.delete_account') }}"
+         style="display:inline-block;padding:8px 20px;background:#dc3545;color:#fff;
+                border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
+        Delete My Account
+      </a>
+    </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

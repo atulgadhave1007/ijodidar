@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Refer & Earn – iJodidar{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:640px;">
+  <a href="{{ url_for('profile.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+
+  <!-- Hero -->
+  <div class="card rounded-4 shadow-sm mb-4 overflow-hidden">
+    <div class="card-body p-4 text-center"
+         style="background:linear-gradient(135deg,#fff5f5,#fff);">
+      <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center
+                  justify-content-center mb-3" style="width:64px;height:64px;">
+        <i class="bi bi-gift-fill text-danger fs-2"></i>
+      </div>
+      <h4 class="fw-bold mb-1">Refer Friends, Earn Silver Plan</h4>
+      <p class="text-muted mb-3">
+        Every friend who joins using your link earns you <strong>1 month Silver plan free</strong>
+        (worth ₹499). <strong>Your friend also gets 15 days Silver free!</strong> No limit on rewards.
+      </p>
+      <div class="card rounded-3 p-3 mb-3" style="background:#fff0f0;">
+        <div class="text-muted small mb-1">Your referral link</div>
+        <div class="d-flex align-items-center gap-2">
+          <code class="flex-grow-1 text-danger fw-semibold" id="refLink"
+                style="font-size:.9rem;word-break:break-all;">
+            https://ijodidar.in/register?ref={{ ref.code }}
+          </code>
+          <button class="btn btn-danger btn-sm rounded-pill flex-shrink-0"
+                  onclick="copyLink()">
+            <i class="bi bi-copy me-1"></i>Copy
+          </button>
+        </div>
+        <div class="text-muted small mt-2">
+          Or share code: <strong>{{ ref.code }}</strong>
+        </div>
+      </div>
+      <!-- Share buttons -->
+      <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a href="https://wa.me/?text=Join+iJodidar+and+find+your+perfect+match!+https://ijodidar.in/register?ref={{ ref.code }}"
+           target="_blank" class="btn btn-success rounded-pill btn-sm px-3">
+          <i class="bi bi-whatsapp me-1"></i>Share on WhatsApp
+        </a>
+        <a href="https://twitter.com/intent/tweet?text=Finding+my+match+on+%40iJodidar!+Join+me+%E2%9D%A4%EF%B8%8F&url=https://ijodidar.in/register?ref={{ ref.code }}"
+           target="_blank" class="btn btn-info text-white rounded-pill btn-sm px-3">
+          <i class="bi bi-twitter me-1"></i>Tweet
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-4">
+      <div class="card rounded-4 shadow-sm text-center p-3">
+        <div class="fw-bold fs-2 text-danger">{{ total_joined }}</div>
+        <div class="text-muted small">Friends Joined</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card rounded-4 shadow-sm text-center p-3">
+        <div class="fw-bold fs-2 text-success">{{ rewarded }}</div>
+        <div class="text-muted small">Rewards Earned</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card rounded-4 shadow-sm text-center p-3">
+        <div class="fw-bold fs-2 text-warning">₹{{ rewarded * 499 }}</div>
+        <div class="text-muted small">Value Earned</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="card rounded-4 shadow-sm">
+    <div class="card-body p-4">
+      <h6 class="fw-bold mb-3">How it works</h6>
+      {% for step, icon, text in [
+        ('1', 'bi-share-fill text-danger',  'Copy your referral link and share with friends or family'),
+        ('2', 'bi-person-plus-fill text-success', 'Friend registers using your link'),
+        ('3', 'bi-gift-fill text-warning',  'You instantly get 1 month Silver plan free — no waiting!'),
+      ] %}
+      <div class="d-flex gap-3 mb-3 align-items-start">
+        <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center
+                    justify-content-center fw-bold flex-shrink-0"
+             style="width:36px;height:36px;font-size:.85rem;">{{ step }}</div>
+        <div>
+          <i class="bi {{ icon }} me-2"></i>{{ text }}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="alert alert-light rounded-3 small text-muted mb-0">
+        <i class="bi bi-info-circle me-1"></i>
+        Reward is granted immediately when the friend verifies their email and joins.
+        You can earn unlimited rewards — one per unique friend.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function copyLink() {
+  const link = document.getElementById('refLink').textContent.trim();
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="bi bi-copy me-1"></i>Copy'; }, 2000);
+  });
+}
+</script>
+{% endblock %}

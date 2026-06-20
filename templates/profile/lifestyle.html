@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Lifestyle – iJodidar{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <a href="{{ url_for('profile.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4"><i class="bi bi-arrow-left me-1"></i>Back</a>
+      <div class="card rounded-4 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-1">Lifestyle &amp; Appearance</h5>
+          <p class="text-muted small mb-4">Helps matches understand your lifestyle better.</p>
+          <form method="POST">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Marital Status</label>
+                <select name="marital_status" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for s in ['Never Married','Divorced','Widowed','Separated','Awaiting Divorce'] %}
+                  <option value="{{ s }}" {% if profile and profile.marital_status==s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Do you have children?</label>
+                <select name="have_children" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for c in ['No','Yes'] %}
+                  <option value="{{ c }}" {% if profile and profile.have_children==c %}selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Diet</label>
+                <select name="diet" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for d in ['Vegetarian','Non-Vegetarian','Eggetarian','Vegan','Jain'] %}
+                  <option value="{{ d }}" {% if profile and profile.diet==d %}selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Smoking</label>
+                <select name="smoking" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for s in ['Never','Occasionally','Regularly'] %}
+                  <option value="{{ s }}" {% if profile and profile.smoking==s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Drinking</label>
+                <select name="drinking" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for d in ['Never','Occasionally','Regularly'] %}
+                  <option value="{{ d }}" {% if profile and profile.drinking==d %}selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Family Type</label>
+                <select name="family_type" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for ft in ['Joint','Nuclear','Extended'] %}
+                  <option value="{{ ft }}" {% if profile and profile.family_type==ft %}selected{% endif %}>{{ ft }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Family Status</label>
+                <select name="family_status" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for fs in ['Middle Class','Upper Middle Class','Rich / Affluent','Affordable'] %}
+                  <option value="{{ fs }}" {% if profile and profile.family_status==fs %}selected{% endif %}>{{ fs }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Complexion</label>
+                <select name="complexion" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for c in ['Fair','Wheatish','Wheatish Brown','Dark'] %}
+                  <option value="{{ c }}" {% if profile and profile.complexion==c %}selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Body Type</label>
+                <select name="body_type" class="form-select">
+                  <option value="">-- Select --</option>
+                  {% for b in ['Slim','Athletic','Average','Heavy'] %}
+                  <option value="{{ b }}" {% if profile and profile.body_type==b %}selected{% endif %}>{{ b }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="d-flex gap-3 mt-4">
+              <button type="submit" class="btn btn-danger rounded-pill px-4">Save</button>
+              <a href="{{ url_for('profile.profile') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

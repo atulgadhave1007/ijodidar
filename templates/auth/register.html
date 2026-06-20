@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Create Account – iJodidar{% endblock %}
+{% block content %}
+<div class="auth-page" style="margin-top:0;padding-top:80px;">
+  <div class="auth-card" style="max-width:480px;">
+    <a href="{{ url_for('main.landing') }}" class="auth-brand">iJodidar</a>
+    <p style="text-align:center;color:var(--text-2);font-size:13.5px;margin-bottom:28px;">
+      Find your perfect match — free forever
+    </p>
+
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row g-3">
+
+        <div class="col-6">
+          {{ form.firstname.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.firstname(class="form-control"+ (" is-invalid" if form.firstname.errors else ""),
+                            placeholder="Priya", style="border-radius:8px;padding:10px 14px;") }}
+          {% for e in form.firstname.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-6">
+          {{ form.lastname.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.lastname(class="form-control"+ (" is-invalid" if form.lastname.errors else ""),
+                           placeholder="Sharma", style="border-radius:8px;padding:10px 14px;") }}
+          {% for e in form.lastname.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-12">
+          {{ form.username.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          <div class="input-group">
+            <span class="input-group-text" style="border-radius:8px 0 0 8px;font-size:13px;
+                  background:var(--surface-2);color:var(--text-3);">@</span>
+            {{ form.username(class="form-control"+ (" is-invalid" if form.username.errors else ""),
+                             placeholder="priya_sharma", style="border-radius:0 8px 8px 0;padding:10px 14px;") }}
+            {% for e in form.username.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px;">
+            Lowercase letters, numbers, _ and . only
+          </div>
+        </div>
+
+        <div class="col-12">
+          {{ form.email.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.email(class="form-control"+ (" is-invalid" if form.email.errors else ""),
+                        placeholder="you@example.com", style="border-radius:8px;padding:10px 14px;") }}
+          {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-12">
+          {{ form.phone.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          <div class="input-group">
+            <span class="input-group-text" style="border-radius:8px 0 0 8px;font-size:13px;
+                  background:var(--surface-2);color:var(--text-3);">🇮🇳 +91</span>
+            {{ form.phone(class="form-control"+ (" is-invalid" if form.phone.errors else ""),
+                          placeholder="9876543210", style="border-radius:0 8px 8px 0;padding:10px 14px;") }}
+            {% for e in form.phone.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="col-6">
+          {{ form.password.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.password(class="form-control"+ (" is-invalid" if form.password.errors else ""),
+                           placeholder="Min 7 characters", style="border-radius:8px;padding:10px 14px;") }}
+          {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-6">
+          {{ form.password2.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.password2(class="form-control"+ (" is-invalid" if form.password2.errors else ""),
+                            placeholder="Confirm", style="border-radius:8px;padding:10px 14px;") }}
+          {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-12">
+          {{ form.date_of_birth.label(class="form-label", style="font-weight:600;font-size:13px;color:var(--text-2);") }}
+          {{ form.date_of_birth(class="form-control" + (" is-invalid" if form.date_of_birth.errors else ""),
+                                style="border-radius:8px;padding:10px 14px;") }}
+          <div style="font-size:11px;color:var(--text-3);margin-top:3px;">Must be 18 years or older.</div>
+          {% for e in form.date_of_birth.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-12">
+          <div class="form-check" style="padding-left:0;">
+            <label style="font-size:12.5px;color:var(--text-2);cursor:pointer;display:flex;gap:8px;align-items:flex-start;">
+              {{ form.consent(class="form-check-input", style="margin-top:3px;flex-shrink:0;" + (" is-invalid" if form.consent.errors else "")) }}
+              <span>I have read and agree to iJodidar's
+                <a href="{{ url_for('main.privacy_policy') }}" target="_blank" style="color:var(--brand);">Privacy Policy</a>
+                and
+                <a href="{{ url_for('main.terms') }}" target="_blank" style="color:var(--brand);">Terms of Service</a>.
+                I confirm I am at least 18 years of age.
+              </span>
+            </label>
+            {% for e in form.consent.errors %}<div style="color:#dc3545;font-size:12px;margin-top:2px;">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="col-12 pt-1">
+          <button type="submit" class="btn-ij-primary w-100 justify-content-center"
+                  style="padding:12px;font-size:14px;border-radius:8px;">
+            Create Account — Free
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div style="display:flex;align-items:center;gap:12px;margin:20px 0 16px;">
+      <div style="flex:1;height:1px;background:var(--border-light);"></div>
+      <span style="font-size:12px;color:var(--text-3);">Already have an account?</span>
+      <div style="flex:1;height:1px;background:var(--border-light);"></div>
+    </div>
+    <a href="{{ url_for('auth.login') }}" class="btn-ij-outline w-100 justify-content-center"
+       style="padding:11px;font-size:14px;border-radius:8px;text-align:center;">
+      Sign In
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'console/_base.html' %}
+{% block title %}Assisted Plan — {{ ar.user.full_name }}{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+  <a href="{{ url_for('console.assisted') }}"
+     style="color:var(--muted);text-decoration:none;font-size:13px;">
+    ← Back to Assisted Plans
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:340px 1fr;gap:20px;">
+
+  <!-- LEFT: Client summary -->
+  <div>
+    <div class="console-card" style="margin-bottom:16px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:16px;">Client</div>
+      <div style="font-size:14px;font-weight:600;">{{ ar.user.full_name }}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:2px;">{{ ar.user.email }}</div>
+      <div style="font-size:12.5px;color:var(--muted);">{{ ar.user.phone or 'No phone' }}</div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="chip chip-{% if ar.status=='active' %}green{% elif ar.status=='pending' %}yellow{% elif ar.status=='completed' %}blue{% else %}grey{% endif %}"
+              style="font-size:11px;">{{ ar.status | title }}</span>
+        <span class="chip chip-grey" style="font-size:11px;">{{ ar.plan_tier | title }} tier</span>
+      </div>
+
+      <div style="margin-top:16px;font-size:12.5px;color:var(--muted);">
+        <div>Target: <strong>{{ ar.profiles_target }}</strong> profiles</div>
+        <div>Sent: <strong>{{ ar.profiles_sent or 0 }}</strong> profiles</div>
+        <div>Requested: {{ ar.created_at.strftime('%d %b %Y') }}</div>
+      </div>
+    </div>
+
+    <!-- Status update -->
+    <div class="console-card" style="margin-bottom:16px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;">Update Status</div>
+      <form method="POST" action="{{ url_for('console.update_assisted', req_id=ar.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="status" class="form-select form-select-sm" style="margin-bottom:8px;">
+          {% for s in ['pending','active','completed','cancelled'] %}
+          <option value="{{ s }}" {% if ar.status==s %}selected{% endif %}>{{ s | title }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="manager" placeholder="RM name"
+               value="{{ ar.assigned_manager or '' }}"
+               class="form-control form-control-sm" style="margin-bottom:8px;">
+        <input type="text" name="manager_phone" placeholder="RM phone"
+               value="{{ ar.manager_phone or '' }}"
+               class="form-control form-control-sm" style="margin-bottom:8px;">
+        <textarea name="notes" placeholder="Internal notes..."
+                  class="form-control form-control-sm"
+                  rows="3" style="margin-bottom:8px;">{{ ar.notes or '' }}</textarea>
+        <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+      </form>
+    </div>
+
+    <!-- Family preference notes -->
+    {% if ar.family_pref_notes %}
+    <div class="console-card">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Family Preferences</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">{{ ar.family_pref_notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Contact log + add entry -->
+  <div>
+    <div class="console-card" style="margin-bottom:16px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:16px;">Add Contact Log</div>
+      <form method="POST" action="{{ url_for('console.add_contact_log', req_id=ar.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Contact type</label>
+            <select name="contact_type" class="form-select form-select-sm">
+              {% for t in CONTACT_TYPES %}
+              <option value="{{ t }}">{{ t | replace('_',' ') | title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Outcome</label>
+            <select name="outcome" class="form-select form-select-sm">
+              <option value="">— Select —</option>
+              {% for o in OUTCOMES %}
+              <option value="{{ o }}">{{ o | replace('_',' ') | title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <textarea name="summary" placeholder="What happened? What was discussed?"
+                  class="form-control form-control-sm" rows="3"
+                  style="margin-bottom:8px;" required></textarea>
+        <input type="text" name="next_action" placeholder="Next action (optional)"
+               class="form-control form-control-sm" style="margin-bottom:10px;">
+        <button type="submit" class="btn btn-sm btn-primary">Add Log Entry</button>
+      </form>
+    </div>
+
+    <!-- Contact history -->
+    <div class="console-card">
+      <div style="font-weight:700;font-size:15px;margin-bottom:16px;">
+        Contact History
+        <span style="font-size:12px;font-weight:400;color:var(--muted);margin-left:6px;">
+          {{ ar.contact_logs | list | length }} entries
+        </span>
+      </div>
+
+      {% set logs = ar.contact_logs | list %}
+      {% if logs %}
+        {% for log in logs %}
+        <div style="padding:14px 0;border-bottom:1px solid var(--border-light);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="chip chip-blue" style="font-size:10px;">
+                {{ log.contact_type | replace('_',' ') | title }}
+              </span>
+              {% if log.outcome %}
+              <span class="chip chip-{% if log.outcome in ['interested','family_approved','meeting_arranged'] %}green{% else %}grey{% endif %}"
+                    style="font-size:10px;">
+                {{ log.outcome | replace('_',' ') | title }}
+              </span>
+              {% endif %}
+            </div>
+            <span style="font-size:11.5px;color:var(--muted);">
+              {{ log.logged_at.strftime('%d %b, %I:%M %p') }}
+              by {{ log.admin.name if log.admin else '?' }}
+            </span>
+          </div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6;">{{ log.summary }}</div>
+          {% if log.next_action %}
+          <div style="font-size:12px;color:var(--brand);margin-top:4px;">
+            → Next: {{ log.next_action }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">
+          No contact logs yet. Add the first entry above.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

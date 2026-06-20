@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Checkout – iJodidar{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:520px;">
+  <a href="{{ url_for('membership.plans') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">
+    <i class="bi bi-arrow-left me-1"></i>Back to Plans
+  </a>
+  <h4 class="fw-bold mb-4">Upgrade to {{ plan.name }} Plan</h4>
+  <div class="card rounded-4 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <div class="fw-bold fs-5">{{ plan.name }} Plan</div>
+          <div class="text-muted small">{{ plan.duration_days }} days validity</div>
+        </div>
+        <span class="fs-4 fw-bold text-danger">₹{{ plan.price_inr }}</span>
+      </div>
+      <hr>
+      <div class="text-muted small">
+        <div class="mb-1"><i class="bi bi-send-fill me-2 text-success"></i>
+          {% if plan.max_interests == 0 %}Unlimited interests
+          {% else %}{{ plan.max_interests }} interests/month{% endif %}
+        </div>
+        {% if plan.can_message %}<div class="mb-1"><i class="bi bi-chat-dots-fill me-2 text-success"></i>Messaging enabled</div>{% endif %}
+        {% if plan.can_view_phone %}<div><i class="bi bi-phone-fill me-2 text-success"></i>View phone numbers</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual UPI fallback (when Razorpay key not set) -->
+  {% if not razorpay_key %}
+  <div class="alert alert-info rounded-4 small mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    Online payment via Razorpay will be enabled soon.
+    For now, pay via UPI and enter the transaction ID below.
+    <br><br>
+    <strong>UPI ID:</strong> ijodidar@upi &nbsp;|&nbsp;
+    <strong>Amount:</strong> ₹{{ plan.price_inr }}
+  </div>
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label fw-medium">UPI / Transaction ID</label>
+      <input type="text" name="payment_ref" class="form-control"
+             placeholder="e.g. 42615198756" required>
+      <div class="form-text">Your plan will be activated within 2 hours of verification.</div>
+    </div>
+    <button type="submit" class="btn btn-danger w-100 rounded-pill py-2 fw-semibold">
+      <i class="bi bi-check-circle me-2"></i>Submit Payment Reference
+    </button>
+  </form>
+  {% else %}
+  <!-- Razorpay pay button -->
+  <button class="btn btn-danger w-100 rounded-pill py-2 fw-semibold pay-btn"
+          data-plan-id="{{ plan.id }}" data-amount="{{ plan.price_inr * 100 }}">
+    <i class="bi bi-lightning-fill me-2"></i>Pay ₹{{ plan.price_inr }} Securely
+  </button>
+  <p class="text-center text-muted small mt-3">
+    <i class="bi bi-shield-lock me-1"></i>256-bit SSL secured payment
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if razorpay_key %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.querySelector('.pay-btn').addEventListener('click', async (e) => {
+  const btn    = e.target;
+  const planId = btn.dataset.planId;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading…';
+  const res   = await fetch(`/plans/create-order/${planId}`, {method:'POST'});
+  const order = await res.json();
+  if (order.error) { alert(order.error); btn.disabled=false; return; }
+  const rzp = new Razorpay({
+    key: '{{ razorpay_key }}', amount: order.amount, currency: 'INR',
+    name: 'iJodidar', order_id: order.order_id,
+    prefill: { name: order.user_name, email: order.user_email, contact: order.user_phone },
+    theme: { color:'#dc3545' },
+    handler: async (r) => {
+      const v = await fetch('/plans/verify-payment', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({...r, plan_id: planId})
+      });
+      const d = await v.json();
+      if (d.success) window.location.href = d.redirect;
+      else alert('Verification failed. Contact support.');
+    },
+    modal: { ondismiss: () => { btn.disabled=false; btn.innerHTML='Pay Securely'; } }
+  });
+  rzp.open();
+});
+</script>
+{% endif %}
+{% endblock %}

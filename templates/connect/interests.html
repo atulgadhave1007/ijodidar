@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Interests – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:760px;">
+
+  <div style="font-size:20px;font-weight:700;margin-bottom:20px;">
+    <i class="bi bi-heart-fill me-2" style="color:var(--brand);"></i>Interests
+  </div>
+
+  <!-- Tab bar -->
+  <div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+              border-radius:40px;padding:4px;width:fit-content;margin-bottom:24px;">
+    {% for tid,label,count,color in [
+      ('received','Received',pending|length,'var(--brand)'),
+      ('sent','Sent',sent|length,'var(--blue)'),
+      ('accepted','Accepted',accepted|length,'var(--green)'),
+      ('declined','Declined',declined|length,'var(--text-3)'),
+    ] %}
+    <button onclick="switchTab('{{ tid }}')" id="tab-{{ tid }}"
+            style="padding:7px 16px;border-radius:40px;border:none;cursor:pointer;
+                   font-size:13px;font-weight:600;transition:all .15s;
+                   display:flex;align-items:center;gap:6px;">
+      {{ label }}
+      {% if count > 0 %}
+      <span style="background:{{ color }};color:#fff;border-radius:40px;
+                   font-size:10px;padding:1px 7px;font-weight:700;">{{ count }}</span>
+      {% endif %}
+    </button>
+    {% endfor %}
+  </div>
+
+  <!-- Tab panels -->
+  {% for tid,items,user_attr in [
+    ('received', pending,  'sender'),
+    ('sent',     sent,     'receiver'),
+    ('accepted', accepted, 'sender'),
+    ('declined', declined, 'sender'),
+  ] %}
+  <div id="panel-{{ tid }}" class="tab-panel">
+    {% if items %}
+    <div class="ij-card">
+      {% for i in items %}
+      {% set u = i[user_attr] %}
+      {% set uimg = u.profile_images|selectattr('is_primary','equalto',True)|first %}
+      <div class="interest-card">
+        <!-- Avatar -->
+        <a href="{{ url_for('main.user_profile', username=u.username) }}" style="flex-shrink:0;">
+          <div class="ij-avatar md">
+            {% if uimg %}<img src="{{ uimg.image_url }}" alt="">
+            {% else %}{{ u.first_name[0] }}{{ u.last_name[0] }}{% endif %}
+          </div>
+        </a>
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <a href="{{ url_for('main.user_profile', username=u.username) }}"
+             style="font-weight:700;font-size:14px;color:var(--text);text-decoration:none;">
+            {{ u.full_name }}
+          </a>
+          <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">
+            {% if u.profile and u.profile.date_of_birth %}{{ u.profile.date_of_birth|age }} yrs{% endif %}
+            {% if u.professional_details and u.professional_details[0].occupation %} · {{ u.professional_details[0].occupation }}{% endif %}
+            {% if u.addresses and u.addresses[0].city %} · {{ u.addresses[0].city.name }}{% endif %}
+          </div>
+          {% if i.message %}
+          <div style="background:var(--brand-alpha);border-left:3px solid var(--brand);
+               border-radius:0 8px 8px 0;padding:8px 12px;margin-top:8px;
+               font-size:12.5px;font-style:italic;color:var(--text-2);">
+            "{{ i.message }}"
+          </div>
+          {% endif %}
+          <div style="font-size:11px;color:var(--text-3);margin-top:6px;">
+            {{ i.sent_at.strftime('%d %b %Y, %I:%M %p') }}
+          </div>
+        </div>
+        <!-- Actions -->
+        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          {% if tid == 'received' and i.status == 'pending' %}
+          <form method="POST" action="{{ url_for('connect.respond_interest', interest_id=i.id, action='accept') }}">
+            <button class="btn-ij-primary" style="padding:6px 16px;font-size:12.5px;border-radius:8px;">
+              <i class="bi bi-check-lg"></i> Accept
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('connect.respond_interest', interest_id=i.id, action='decline') }}">
+            <button class="btn-ij-ghost" style="padding:5px 16px;font-size:12.5px;border-radius:8px;color:var(--brand);border-color:var(--brand-mid);">
+              Decline
+            </button>
+          </form>
+          {% elif tid == 'sent' and i.status == 'pending' %}
+          <span class="chip" style="background:var(--amber-bg);color:var(--amber);">Pending</span>
+          <form method="POST" action="{{ url_for('connect.withdraw_interest', interest_id=i.id) }}">
+            <button class="btn-ij-ghost" style="padding:4px 12px;font-size:11.5px;border-radius:8px;">
+              Withdraw
+            </button>
+          </form>
+          {% elif i.status == 'accepted' %}
+          <span class="chip chip-verified">Accepted</span>
+          <a href="{{ url_for('messaging.inbox') }}" class="btn-ij-primary"
+             style="padding:6px 14px;font-size:12.5px;border-radius:8px;">
+            <i class="bi bi-chat-dots-fill"></i> Chat
+          </a>
+          {% elif i.status == 'declined' %}
+          <span class="chip" style="background:var(--brand-mid);color:var(--brand);">Declined</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ij-card p-5 text-center">
+      <div class="ij-avatar lg mx-auto mb-3" style="background:var(--brand-alpha);">
+        <i class="bi bi-heart" style="font-size:1.8rem;color:var(--brand);opacity:.5;"></i>
+      </div>
+      <div style="font-size:15px;font-weight:600;color:var(--text-2);">No {{ tid }} interests</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const TABS = ['received','sent','accepted','declined'];
+function switchTab(tid) {
+  TABS.forEach(t => {
+    const btn   = document.getElementById('tab-' + t);
+    const panel = document.getElementById('panel-' + t);
+    const active = t === tid;
+    btn.style.background  = active ? 'var(--brand)'   : 'transparent';
+    btn.style.color       = active ? '#fff'            : 'var(--text-2)';
+    panel.style.display   = active ? 'block'           : 'none';
+  });
+}
+switchTab('received');
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Messages – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:680px;">
+  <div style="font-size:20px;font-weight:700;margin-bottom:16px;">Messages</div>
+
+  <div class="ij-card">
+    {% if conversations %}
+    {% for conv in conversations %}
+    {% set other = conv.other_user(current_user.id) %}
+    {% set last  = conv.last_message() %}
+    {% set oimg  = other.profile_images | selectattr('is_primary','equalto',True) | first %}
+    {% set is_unread = last and last.sender_id != current_user.id and not last.is_read %}
+    <a href="{{ url_for('messaging.conversation', conv_id=conv.id) }}"
+       class="conv-item {{ 'unread' if is_unread else '' }}">
+      <div class="ij-avatar md">
+        {% if oimg %}<img src="{{ oimg.image_url }}" alt="">
+        {% else %}{{ other.first_name[0] }}{{ other.last_name[0] }}{% endif %}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="d-flex justify-content-between align-items-baseline">
+          <span class="conv-name" style="font-size:14px;font-weight:600;">{{ other.full_name }}</span>
+          {% if last %}
+          <span style="font-size:11px;color:var(--text-3);flex-shrink:0;margin-left:8px;">
+            {{ last.sent_at.strftime('%I:%M %p') }}
+          </span>
+          {% endif %}
+        </div>
+        <div class="conv-preview" style="font-size:12.5px;color:var(--text-2);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          {% if last %}
+            {% if last.sender_id == current_user.id %}<span style="color:var(--text-3);">You: </span>{% endif %}
+            {{ last.body }}
+          {% else %}
+            <span style="color:var(--text-3);">No messages yet — say hi!</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if is_unread %}
+      <div style="width:9px;height:9px;background:var(--brand);border-radius:50%;flex-shrink:0;margin-top:6px;"></div>
+      {% endif %}
+    </a>
+    {% endfor %}
+
+    {% else %}
+    <div style="text-align:center;padding:48px 24px;">
+      <div class="ij-avatar lg mx-auto mb-3" style="background:var(--blue-bg);">
+        <i class="bi bi-chat-dots" style="font-size:1.8rem;color:var(--blue);"></i>
+      </div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:6px;">No conversations yet</div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
+        Accept an interest to start chatting.
+      </div>
+      <a href="{{ url_for('connect.my_interests') }}" class="btn-ij-primary">
+        <i class="bi bi-heart"></i>View Interests
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

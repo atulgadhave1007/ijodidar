@@ -1,0 +1,98 @@
+{% extends 'console/_base.html' %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+  <div>
+    <div class="page-title">User Management</div>
+    <div class="page-sub">{{ pagination.total }} total users (staff excluded)</div>
+  </div>
+  <!-- Filters -->
+  <form method="GET" action="{{ url_for('console.users') }}" class="d-flex gap-2 flex-wrap">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email, phone…"
+           class="form-control" style="border-radius:8px;width:220px;font-size:13px;">
+    <select name="filter" class="form-select" style="border-radius:8px;width:160px;font-size:13px;"
+            onchange="this.form.submit()">
+      <option value="all"        {% if filter=='all' %}selected{% endif %}>All Users</option>
+      <option value="verified"   {% if filter=='verified' %}selected{% endif %}>Email Verified</option>
+      <option value="unverified" {% if filter=='unverified' %}selected{% endif %}>Unverified</option>
+      <option value="suspended"  {% if filter=='suspended' %}selected{% endif %}>Suspended</option>
+      <option value="paying"     {% if filter=='paying' %}selected{% endif %}>Paying</option>
+    </select>
+    <button type="submit" class="btn btn-danger rounded-pill" style="font-size:13px;padding:8px 18px;">
+      <i class="bi bi-search me-1"></i>Search
+    </button>
+  </form>
+</div>
+
+<div class="console-card">
+  <table class="console-table">
+    <thead>
+      <tr><th>User</th><th>Phone</th><th>Plan</th><th>Verified</th><th>ID</th><th>Joined</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for u in pagination.items %}
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13.5px;">{{ u.full_name }}</div>
+          <div style="font-size:11.5px;color:var(--muted);">@{{ u.username }} · {{ u.email }}</div>
+        </td>
+        <td style="font-size:12.5px;color:var(--muted);">{{ u.phone or '—' }}</td>
+        <td>
+          <span class="chip {{ 'chip-green' if u.plan_name != 'Free' else 'chip-grey' }}">
+            {{ u.plan_name }}
+          </span>
+        </td>
+        <td>
+          {% if u.is_verified %}
+          <span class="chip chip-green" style="font-size:10.5px;padding:2px 7px;">
+            <i class="bi bi-check"></i>Email
+          </span>
+          {% endif %}
+          {% if u.phone_verified %}
+          <span class="chip chip-blue" style="font-size:10.5px;padding:2px 7px;">
+            <i class="bi bi-shield-check"></i>Phone
+          </span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.profile and u.profile.id_verified %}
+          <span class="chip chip-green" style="font-size:10.5px;padding:2px 7px;">🆔 ID</span>
+          {% else %}
+          <span style="color:#e2e8f0;font-size:12px;">—</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted);font-size:12px;">
+          {{ u.created_at.strftime('%d %b %Y') }}
+        </td>
+        <td>
+          <span class="chip {{ 'chip-green' if u.is_active_acc else 'chip-red' }}" style="font-size:10.5px;padding:2px 7px;">
+            {{ 'Active' if u.is_active_acc else 'Suspended' }}
+          </span>
+        </td>
+        <td>
+          <a href="{{ url_for('console.user_detail', user_id=u.id) }}"
+             style="font-size:12px;color:var(--brand);font-weight:600;text-decoration:none;">
+            View →
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  {% if pagination.pages > 1 %}
+  <div style="padding:14px 20px;display:flex;gap:6px;align-items:center;border-top:1px solid #f1f5f9;">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('console.users', page=pagination.prev_num, q=q, filter=filter) }}"
+       class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size:12px;">← Prev</a>
+    {% endif %}
+    <span style="font-size:12px;color:var(--muted);">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('console.users', page=pagination.next_num, q=q, filter=filter) }}"
+       class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size:12px;">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Partner Preferences – iJodidar{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-7 col-lg-8">
+      <a href="{{ url_for('profile.profile') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-4">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      <div class="card rounded-4 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>Partner Preferences</h5>
+          <p class="text-muted small mb-4">Tell us what you're looking for. We'll use this to find your best matches.</p>
+          <form method="POST">
+            <!-- Age & Height -->
+            <h6 class="fw-semibold text-muted small text-uppercase mb-3 mt-2">Age & Physical</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3"><label class="form-label fw-medium">Min Age</label>
+                <input type="number" name="min_age" class="form-control" min="18" max="70"
+                       value="{{ pref.min_age or '' if pref else '' }}" placeholder="21"></div>
+              <div class="col-md-3"><label class="form-label fw-medium">Max Age</label>
+                <input type="number" name="max_age" class="form-control" min="18" max="70"
+                       value="{{ pref.max_age or '' if pref else '' }}" placeholder="35"></div>
+              <div class="col-md-3"><label class="form-label fw-medium">Min Height (cm)</label>
+                <input type="number" name="min_height" class="form-control" min="140" max="220"
+                       value="{{ pref.min_height or '' if pref else '' }}" placeholder="155"></div>
+              <div class="col-md-3"><label class="form-label fw-medium">Max Height (cm)</label>
+                <input type="number" name="max_height" class="form-control" min="140" max="220"
+                       value="{{ pref.max_height or '' if pref else '' }}" placeholder="185"></div>
+            </div>
+            <!-- Religion & Community -->
+            <h6 class="fw-semibold text-muted small text-uppercase mb-3">Religion & Community</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Religion</label>
+                <select name="religion" class="form-select">
+                  <option value="">Any</option>
+                  {% for r in ['Hindu','Muslim','Christian','Sikh','Buddhist','Jain','Parsi','Other'] %}
+                  <option value="{{ r }}" {% if pref and pref.religion==r %}selected{% endif %}>{{ r }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4"><label class="form-label fw-medium">Caste</label>
+                <input type="text" name="caste" class="form-control" placeholder="Any"
+                       value="{{ pref.caste or '' if pref else '' }}"></div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Mother Tongue</label>
+                <select name="mother_tongue" class="form-select">
+                  <option value="">Any</option>
+                  {% for t in ['Hindi','Marathi','Bengali','Telugu','Tamil','Gujarati','Kannada','Malayalam','Punjabi','Odia','Urdu','Other'] %}
+                  <option value="{{ t }}" {% if pref and pref.mother_tongue==t %}selected{% endif %}>{{ t }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Manglik</label>
+                <select name="manglik" class="form-select">
+                  <option value="">Any</option>
+                  {% for m in ['Yes','No','Partial'] %}
+                  <option value="{{ m }}" {% if pref and pref.manglik==m %}selected{% endif %}>{{ m }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <!-- Lifestyle -->
+            <h6 class="fw-semibold text-muted small text-uppercase mb-3">Lifestyle</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Marital Status</label>
+                <select name="marital_status" class="form-select">
+                  <option value="">Any</option>
+                  {% for s in ['Never Married','Divorced','Widowed'] %}
+                  <option value="{{ s }}" {% if pref and pref.marital_status==s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Diet</label>
+                <select name="diet" class="form-select">
+                  <option value="">Any</option>
+                  {% for d in ['Vegetarian','Non-Vegetarian','Eggetarian','Vegan','Jain'] %}
+                  <option value="{{ d }}" {% if pref and pref.diet==d %}selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Smoking</label>
+                <select name="smoking" class="form-select">
+                  <option value="">Any</option>
+                  {% for s in ['Never','Occasionally','Regularly'] %}
+                  <option value="{{ s }}" {% if pref and pref.smoking==s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Drinking</label>
+                <select name="drinking" class="form-select">
+                  <option value="">Any</option>
+                  {% for d in ['Never','Occasionally','Regularly'] %}
+                  <option value="{{ d }}" {% if pref and pref.drinking==d %}selected{% endif %}>{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4"><label class="form-label fw-medium">Min Income</label>
+                <input type="text" name="min_income" class="form-control" placeholder="e.g. 5 LPA"
+                       value="{{ pref.min_income or '' if pref else '' }}"></div>
+              <div class="col-md-4"><label class="form-label fw-medium">Education Level</label>
+                <input type="text" name="education_level" class="form-control" placeholder="e.g. Graduate, Post-Graduate"
+                       value="{{ pref.education_level or '' if pref else '' }}"></div>
+              <div class="col-md-4"><label class="form-label fw-medium">Location Preference</label>
+                <input type="text" name="location_preference" class="form-control" placeholder="e.g. Mumbai, Pune or Any"
+                       value="{{ pref.location_preference or '' if pref else '' }}"></div>
+            </div>
+            <!-- About -->
+            <div class="mb-4">
+              <label class="form-label fw-medium">Describe Your Ideal Partner <span class="text-muted small">(optional)</span></label>
+              <textarea name="about" class="form-control" rows="3" maxlength="500"
+                        placeholder="Describe what you're looking for in a life partner…">{{ pref.about or '' if pref else '' }}</textarea>
+            </div>
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn btn-danger rounded-pill px-5 fw-semibold">Save Preferences</button>
+              <a href="{{ url_for('profile.profile') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(head -50)",
+      "PowerShell(Test-Path \"$env:USERPROFILE\\\\.aws\\\\credentials\"; Test-Path \"$env:USERPROFILE\\\\.aws\\\\config\")"
+    ]
+  }
+}

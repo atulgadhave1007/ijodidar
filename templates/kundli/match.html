@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Kundli Match – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:680px;">
+  <a href="{{ url_for('main.user_profile', username=other.username) }}"
+     class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back to Profile
+  </a>
+
+  <!-- Score hero -->
+  <div class="ij-card mb-3" style="overflow:hidden;">
+    <div style="background:linear-gradient(135deg,var(--brand) 0%,#ff6b6b 100%);
+                padding:32px 24px;text-align:center;color:#fff;">
+      <div style="font-size:13px;font-weight:600;opacity:.8;margin-bottom:8px;">
+        Ashtakoot Guna Milan
+      </div>
+      {% if guna.available %}
+      <div style="font-size:4rem;font-weight:800;line-height:1;margin-bottom:8px;">
+        {{ guna.score }}<span style="font-size:1.5rem;opacity:.7;">/36</span>
+      </div>
+      <div style="font-size:14px;opacity:.9;">{{ guna.interpretation }}</div>
+      {% else %}
+      <div style="font-size:2rem;font-weight:700;margin-bottom:8px;">—</div>
+      <div style="font-size:14px;opacity:.8;">{{ guna.interpretation }}</div>
+      {% endif %}
+    </div>
+
+    {% if guna.available %}
+    <!-- Score bar -->
+    <div class="ij-card-body">
+      <div class="completion-bar mb-2" style="height:10px;">
+        <div class="completion-fill {{ 'fill-high' if guna.score>=24 else 'fill-mid' if guna.score>=18 else 'fill-low' }}"
+             style="width:{{ (guna.score/36*100)|round }}%;"></div>
+      </div>
+      <div class="d-flex justify-content-between" style="font-size:12px;color:var(--text-2);">
+        <span>0 — Incompatible</span>
+        <span>18 — Acceptable</span>
+        <span>24 — Good</span>
+        <span>36 — Perfect</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Koot breakdown -->
+  {% if guna.available and guna.koots %}
+  <div class="ij-card mb-3">
+    <div class="ij-card-header">8 Koot Breakdown</div>
+    <div class="ij-card-body p-0">
+      {% for koot, (pts, maxpts) in guna.koots.items() %}
+      <div style="display:flex;align-items:center;padding:12px 20px;
+                  border-bottom:1px solid var(--border-light);">
+        <div style="width:140px;font-weight:600;font-size:13.5px;">{{ koot }}</div>
+        <div style="flex:1;margin:0 16px;">
+          <div class="completion-bar" style="height:6px;">
+            <div class="completion-fill {{ 'fill-high' if pts==maxpts else 'fill-mid' if pts>0 else 'fill-low' }}"
+                 style="width:{{ (pts/maxpts*100)|round if maxpts else 0 }}%;"></div>
+          </div>
+        </div>
+        <div style="font-weight:700;font-size:13.5px;min-width:50px;text-align:right;
+             color:{% if pts==maxpts %}var(--green){% elif pts>0 %}#f59e0b{% else %}var(--brand){% endif %};">
+          {{ pts }}/{{ maxpts }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Gotra compatibility -->
+  <div class="ij-card mb-3">
+    <div class="ij-card-header">Gotra / Sapinda Check</div>
+    <div class="ij-card-body">
+      <div class="d-flex gap-3 align-items-start">
+        <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;
+             background:{{ 'var(--green-bg)' if gotra_compatible else '#fef3c7' }};
+             display:flex;align-items:center;justify-content:center;">
+          <i class="bi bi-{{ 'check-circle-fill' if gotra_compatible else 'exclamation-triangle-fill' }}"
+             style="color:{{ 'var(--green)' if gotra_compatible else '#f59e0b' }};"></i>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14px;
+               color:{{ 'var(--green)' if gotra_compatible else '#92400e' }};">
+            {{ 'Gotra Compatible' if gotra_compatible else 'Gotra Check Required' }}
+          </div>
+          <div style="font-size:13px;color:var(--text-2);margin-top:3px;line-height:1.5;">
+            {{ gotra_msg }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profiles at a glance -->
+  <div class="ij-card">
+    <div class="ij-card-header">Birth Details Comparison</div>
+    <div class="ij-card-body p-0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-light);">
+        <div style="padding:12px 20px;border-right:1px solid var(--border-light);font-weight:700;font-size:13px;color:var(--text-2);">{{ user.first_name }}</div>
+        <div style="padding:12px 20px;font-weight:700;font-size:13px;color:var(--text-2);">{{ other.first_name }}</div>
+      </div>
+      {% for label, v1, v2 in [
+        ('Nakshatra', my_kd.nakshatra if my_kd else '—', other_kd.nakshatra if other_kd else '—'),
+        ('Rashi',     my_kd.rashi     if my_kd else '—', other_kd.rashi     if other_kd else '—'),
+        ('Gana',      my_kd.gana      if my_kd else '—', other_kd.gana      if other_kd else '—'),
+        ('Nadi',      my_kd.nadi      if my_kd else '—', other_kd.nadi      if other_kd else '—'),
+        ('Manglik',   my_kd.manglik   if my_kd else '—', other_kd.manglik   if other_kd else '—'),
+      ] %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;
+                  border-bottom:1px solid var(--border-light);">
+        <div style="padding:10px 20px;border-right:1px solid var(--border-light);">
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">{{ label }}</div>
+          <div style="font-size:13.5px;font-weight:600;margin-top:2px;">{{ v1 or '—' }}</div>
+        </div>
+        <div style="padding:10px 20px;">
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">{{ label }}</div>
+          <div style="font-size:13.5px;font-weight:600;margin-top:2px;">{{ v2 or '—' }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="text-center mt-4" style="font-size:12px;color:var(--text-3);">
+    <i class="bi bi-info-circle me-1"></i>
+    Guna Milan is a traditional matching tool. Final marriage decisions should involve
+    family consensus and if needed, consultation with a family astrologer (jyotishi).
+  </div>
+</div>
+{% endblock %}

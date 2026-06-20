@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Home – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container">
+  <div class="d-flex gap-4 align-items-start">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="ij-sidebar d-none d-lg-block">
+      <div class="sidebar-card mb-3">
+        {% set pri = current_user.profile_images | selectattr('is_primary','equalto',True) | first %}
+        <!-- Mini profile widget -->
+        <div style="background:linear-gradient(135deg,var(--brand),#ff6b6b);height:52px;border-radius:10px 10px 0 0;margin:-8px -8px 0;"></div>
+        <div style="margin-top:-24px;padding:0 12px 12px;text-align:center;">
+          <div class="ij-avatar md mx-auto mb-2" style="border:3px solid #fff;box-shadow:var(--shadow-sm);">
+            {% if pri %}<img src="{{ pri.image_url }}" alt="">
+            {% else %}{{ current_user.first_name[0] }}{{ current_user.last_name[0] }}{% endif %}
+          </div>
+          <div style="font-weight:700;font-size:14px;line-height:1.3;">{{ current_user.full_name }}</div>
+          <div style="font-size:11.5px;color:var(--text-2);margin-bottom:6px;">
+            {% if current_user.profile and current_user.profile.date_of_birth %}{{ current_user.profile.date_of_birth | age }} yrs{% endif %}
+            {% if current_user.addresses and current_user.addresses[0].city %} · {{ current_user.addresses[0].city.name }}{% endif %}
+          </div>
+          <span class="chip chip-plan {{ 'gold' if current_user.plan_name == 'Gold' else 'platinum' if current_user.plan_name == 'Platinum' else '' }}">
+            {{ current_user.plan_name }}
+          </span>
+        </div>
+        <div class="divider"></div>
+        <!-- Nav links -->
+        <a href="{{ url_for('main.home') }}" class="sidebar-link active">
+          <i class="bi bi-house-fill"></i>Home
+        </a>
+        <a href="{{ url_for('profile.profile') }}" class="sidebar-link">
+          <i class="bi bi-person-circle"></i>My Profile
+        </a>
+        <a href="{{ url_for('connect.my_interests') }}" class="sidebar-link">
+          <i class="bi bi-heart"></i>Interests
+          {% if pending_interests > 0 %}
+          <span class="chip ms-auto" style="font-size:10px;padding:1px 7px;background:var(--brand-mid);color:var(--brand);">{{ pending_interests }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('search.search_profiles') }}" class="sidebar-link">
+          <i class="bi bi-search"></i>Search
+        </a>
+        <a href="{{ url_for('connect.my_shortlist') }}" class="sidebar-link">
+          <i class="bi bi-bookmark-star"></i>Shortlist
+        </a>
+        <a href="{{ url_for('family.family') }}" class="sidebar-link">
+          <i class="bi bi-people-fill"></i>My Family
+        </a>
+        <div class="divider"></div>
+        <a href="{{ url_for('membership.plans') }}" class="sidebar-link" style="color:#f59e0b;">
+          <i class="bi bi-star-fill" style="color:#f59e0b;"></i>Upgrade Plan
+        </a>
+      </div>
+    </div>
+
+    <!-- MAIN FEED -->
+    <div style="flex:1;min-width:0;">
+
+      <!-- Header bar -->
+      <div class="ij-card mb-3 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <div style="font-size:16px;font-weight:700;">
+            Good day, {{ current_user.first_name | title }}! 👋
+          </div>
+          <div style="font-size:13px;color:var(--text-2);">
+            {% if has_preferences %}
+              Showing your best matches · scored by compatibility
+            {% else %}
+              <a href="{{ url_for('profile.partner_preferences') }}" style="color:var(--brand);font-weight:600;">Set partner preferences</a>
+              to see personalised match scores
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('search.search_profiles') }}" class="btn-ij-ghost" style="padding:6px 14px;">
+            <i class="bi bi-search"></i>Search
+          </a>
+          <a href="{{ url_for('profile.partner_preferences') }}" class="btn-ij-ghost" style="padding:6px 14px;">
+            <i class="bi bi-sliders"></i>Preferences
+          </a>
+        </div>
+      </div>
+
+      {% if not current_user.profile or not current_user.profile.gender %}
+      <!-- Incomplete profile nudge -->
+      <div class="ij-card p-4 mb-3 d-flex align-items-center gap-3"
+           style="border-left:4px solid var(--blue);">
+        <div class="ij-avatar md" style="background:var(--blue-bg);color:var(--blue);flex-shrink:0;">
+          <i class="bi bi-person-exclamation" style="font-size:1.2rem;"></i>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">Complete your profile</div>
+          <div style="font-size:13px;color:var(--text-2);">
+            Set your gender to see relevant matches.
+            <a href="{{ url_for('profile.gender') }}" style="color:var(--brand);font-weight:600;">Do it now →</a>
+          </div>
+        </div>
+      </div>
+
+      {% elif scored_users %}
+      <!-- Profile cards grid -->
+      <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-3">
+        {% for score, u in scored_users %}
+        <div class="col">
+          <div class="profile-card {{ 'spotlight' if u.profile and u.profile.is_spotlight else '' }}"
+               onclick="location.href='{{ url_for('main.user_profile', username=u.username) }}'">
+
+            <!-- Card cover + avatar -->
+            <div class="profile-card-cover"
+                 style="background:linear-gradient(135deg,
+                   hsl({{ loop.index * 37 % 360 }},60%,40%) 0%,
+                   hsl({{ (loop.index * 37 + 30) % 360 }},50%,55%) 100%);">
+              <div class="profile-card-avatar">
+                {% set uimg = u.profile_images | selectattr('is_primary','equalto',True) | first %}
+                {% if uimg %}
+                  {# Free users see blurred photos — upgrade to Silver to unblur #}
+                  {% if current_user.plan_can_view_photos %}
+                    <img src="{{ uimg.card_url or uimg.image_url }}" alt="">
+                  {% else %}
+                    <img src="{{ uimg.card_url or uimg.image_url }}" alt=""
+                         style="filter:blur(8px);transform:scale(1.1);">
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                                align-items:center;justify-content:center;
+                                background:rgba(0,0,0,.35);border-radius:inherit;">
+                      <i class="bi bi-lock-fill" style="color:#fff;font-size:1.1rem;"></i>
+                      <span style="color:#fff;font-size:10px;font-weight:700;margin-top:3px;">Silver+</span>
+                    </div>
+                  {% endif %}
+                {% else %}{{ u.first_name[0] }}{{ u.last_name[0] }}{% endif %}
+              </div>
+              <!-- Match ring -->
+              {% if has_preferences and score > 0 %}
+              <div class="match-ring">
+                {% set circ = 56.5 %}
+                {% set dash = (score / 100 * circ) | round(1) %}
+                <svg width="36" height="36" viewBox="0 0 24 24">
+                  <circle class="ring-track" cx="12" cy="12" r="9"/>
+                  <circle class="ring-fill" cx="12" cy="12" r="9"
+                    stroke="{% if score>=70 %}var(--green){% elif score>=40 %}#f59e0b{% else %}var(--brand){% endif %}"
+                    stroke-dasharray="{{ dash }} {{ circ }}"
+                    stroke-dashoffset="0"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                     font-size:7.5px;font-weight:800;color:#fff;">{{ score }}%</div>
+              </div>
+              {% endif %}
+              <!-- Spotlight badge -->
+              {% if u.profile and u.profile.is_spotlight %}
+              <span style="position:absolute;top:8px;left:8px;background:#f59e0b;color:#000;
+                font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">⭐ Featured</span>
+              {% endif %}
+            </div>
+
+            <!-- Card body -->
+            <div class="profile-card-body">
+              <div class="d-flex align-items-start justify-content-between">
+                <div style="min-width:0;flex:1;">
+                  <div class="profile-card-name d-flex align-items-center gap-1">
+                    <span class="text-truncate">{{ u.full_name }}</span>
+                    {% if u.is_verified %}
+                    <i class="bi bi-patch-check-fill flex-shrink-0" style="color:var(--green);font-size:.8rem;" title="Email Verified"></i>
+                    {% endif %}
+                    {% if u.phone_verified %}
+                    <i class="bi bi-shield-fill-check flex-shrink-0" style="color:var(--blue);font-size:.8rem;" title="Phone Verified"></i>
+                    {% endif %}
+                  </div>
+                  <div class="profile-card-meta">
+                    {% if u.profile %}
+                      {% if u.profile.date_of_birth %}{{ u.profile.date_of_birth | age }} yrs{% endif %}
+                      {% if u.profile.religion %} · {{ u.profile.religion }}{% endif %}
+                    {% endif %}
+                    {% if u.addresses and u.addresses[0].city %}
+                    <br><i class="bi bi-geo-alt" style="font-size:.75rem;margin-right:2px;"></i>{{ u.addresses[0].city.name }}
+                    {% endif %}
+                    {% if u.professional_details and u.professional_details[0].occupation %}
+                    <br><i class="bi bi-briefcase" style="font-size:.75rem;margin-right:2px;"></i>{{ u.professional_details[0].occupation }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <!-- Match score bar -->
+              {% if has_preferences and score > 0 %}
+              <div class="completion-bar mt-3">
+                <div class="completion-fill {{ 'fill-high' if score>=70 else 'fill-mid' if score>=40 else 'fill-low' }}"
+                     style="width:{{ score }}%;"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span style="font-size:10px;color:var(--text-3);">Match Score</span>
+                <span style="font-size:10px;font-weight:700;color:{% if score>=70 %}var(--green){% elif score>=40 %}#f59e0b{% else %}var(--text-3){% endif %};">{{ score }}%</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <div class="ij-card p-5 text-center">
+        <div class="ij-avatar lg mx-auto mb-3" style="background:var(--brand-alpha);">
+          <i class="bi bi-people" style="font-size:1.8rem;color:var(--brand);"></i>
+        </div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px;">No matches yet</div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
+          Try updating your profile or searching manually.
+        </div>
+        <a href="{{ url_for('search.search_profiles') }}" class="btn-ij-primary">
+          <i class="bi bi-search"></i>Search Profiles
+        </a>
+      </div>
+      {% endif %}
+
+    </div><!-- /main -->
+  </div>
+</div>
+{% endblock %}

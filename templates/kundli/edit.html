@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}Kundli / Birth Chart — iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:680px;">
+  <a href="{{ url_for('profile.profile') }}"
+     class="d-inline-flex align-items-center gap-2 mb-4"
+     style="color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:600;">
+    <i class="bi bi-arrow-left"></i> Back to Profile
+  </a>
+
+  <div class="ij-card mb-3" style="border-left:4px solid var(--brand);background:var(--brand-alpha);">
+    <div class="ij-card-body py-3">
+      <div class="d-flex gap-3 align-items-start">
+        <i class="bi bi-stars" style="color:var(--brand);font-size:1.3rem;flex-shrink:0;margin-top:2px;"></i>
+        <div style="font-size:13.5px;color:var(--text-2);line-height:1.65;">
+          Enter your <strong>Date of Birth, Time of Birth, and Birth City</strong> — 
+          iJodidar will automatically calculate your Nakshatra, Rashi, Gana, Nadi, and Manglik status
+          for Ashtakoot Guna Milan (36-point compatibility matching).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTO CALCULATE SECTION -->
+  <div class="ij-card mb-3">
+    <div class="ij-card-header">
+      <div style="font-weight:800;font-size:17px;">
+        <i class="bi bi-calculator me-2" style="color:var(--brand);"></i>
+        Auto-Calculate from Birth Details
+        <span style="background:var(--green-bg);color:var(--green);font-size:10px;
+                     padding:2px 8px;border-radius:4px;font-weight:700;margin-left:6px;">
+          Recommended
+        </span>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);margin-top:3px;">
+        Uses Vedic astronomy (Meeus algorithm, Lahiri ayanamsa) — no external tools needed
+      </div>
+    </div>
+    <div class="ij-card-body">
+
+      <!-- Live preview of calculated values -->
+      {% if kd and kd.nakshatra %}
+      <div id="preview-box" style="background:#f0fdf4;border:1px solid #86efac;
+                                    border-radius:12px;padding:16px;margin-bottom:20px;">
+        <div style="font-weight:700;font-size:13px;color:var(--green);margin-bottom:10px;">
+          <i class="bi bi-check-circle-fill me-1"></i> Currently saved
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          {% for label, val in [
+            ('Nakshatra', kd.nakshatra),
+            ('Rashi', kd.rashi),
+            ('Charan', kd.charan),
+            ('Gana', kd.gana),
+            ('Nadi', kd.nadi),
+            ('Manglik', kd.manglik),
+          ] %}
+          <div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #bbf7d0;">
+            <div style="font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">{{ label }}</div>
+            <div style="font-weight:700;font-size:13.5px;margin-top:2px;">{{ val or '—' }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div id="preview-box" style="display:none;background:#f0fdf4;border:1px solid #86efac;
+                                    border-radius:12px;padding:16px;margin-bottom:20px;">
+        <div style="font-weight:700;font-size:13px;color:var(--green);margin-bottom:10px;">
+          <i class="bi bi-check-circle-fill me-1"></i> Calculated result
+        </div>
+        <div id="preview-content" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+        <div id="preview-notes" style="font-size:11.5px;color:var(--text-3);margin-top:10px;"></div>
+      </div>
+      {% endif %}
+
+      <form method="POST" id="auto-form">
+        <input type="hidden" name="mode" value="auto">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Date of Birth</label>
+            <input type="date" name="birth_date" id="dob"
+                   value="{{ kd.birth_date if kd else '' }}"
+                   class="form-control" style="border-radius:8px;" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">
+              Time of Birth
+              <span style="font-size:10px;color:var(--text-3);font-weight:400;">(local time)</span>
+            </label>
+            <input type="time" name="birth_time" id="btime"
+                   value="{{ kd.birth_time if kd else '' }}"
+                   class="form-control" style="border-radius:8px;" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Birth City</label>
+            <input type="text" name="birth_city" id="bcity"
+                   value="{{ kd.birth_city if kd else '' }}"
+                   placeholder="Pune, Mumbai, Nagpur…"
+                   class="form-control" style="border-radius:8px;" required
+                   autocomplete="off" list="city-suggestions">
+            <datalist id="city-suggestions"></datalist>
+          </div>
+        </div>
+
+        <div style="margin-top:6px;font-size:12px;color:var(--text-3);">
+          <i class="bi bi-info-circle me-1"></i>
+          Time of birth affects Manglik calculation accuracy.
+          Nakshatra / Rashi calculation requires date + city only.
+        </div>
+
+        <div class="d-flex gap-3 mt-4 align-items-center">
+          <button type="button" id="preview-btn"
+                  style="padding:10px 22px;border-radius:8px;font-size:14px;
+                         border:1.5px solid var(--brand);color:var(--brand);
+                         background:#fff;cursor:pointer;font-weight:600;">
+            <i class="bi bi-search me-1"></i>Preview
+          </button>
+          <button type="submit"
+                  style="padding:11px 28px;border-radius:8px;font-size:14px;
+                         background:var(--brand);color:#fff;border:none;
+                         cursor:pointer;font-weight:700;">
+            <i class="bi bi-stars me-1"></i>Calculate & Save
+          </button>
+          <div id="loading" style="display:none;font-size:13px;color:var(--text-3);">
+            <span class="spinner-border spinner-border-sm me-1"></span> Calculating…
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MANUAL OVERRIDE SECTION -->
+  <details class="ij-card mb-3" style="cursor:pointer;">
+    <summary style="padding:16px 20px;font-weight:700;font-size:14px;color:var(--text-2);
+                    list-style:none;display:flex;align-items:center;gap:8px;">
+      <i class="bi bi-pencil-square"></i>
+      Manual Entry — I have my paper kundli
+      <i class="bi bi-chevron-down ms-auto"></i>
+    </summary>
+    <div class="ij-card-body" style="border-top:1px solid var(--border-light);">
+      <div style="font-size:13px;color:var(--text-3);margin-bottom:16px;">
+        Only use this if you have a verified kundli document and want to override
+        the auto-calculated values.
+      </div>
+      <form method="POST">
+        <input type="hidden" name="mode" value="manual">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Birth Date</label>
+            <input type="date" name="birth_date" value="{{ kd.birth_date if kd else '' }}"
+                   class="form-control" style="border-radius:8px;">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Birth Time</label>
+            <input type="time" name="birth_time" value="{{ kd.birth_time if kd else '' }}"
+                   class="form-control" style="border-radius:8px;">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Birth City</label>
+            <input type="text" name="birth_city" value="{{ kd.birth_city if kd else '' }}"
+                   class="form-control" style="border-radius:8px;">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:700;font-size:14px;">Janma Nakshatra</label>
+            <select name="nakshatra" class="form-select" style="border-radius:8px;">
+              <option value="">-- Select Nakshatra --</option>
+              {% for n in nakshatras %}
+              <option value="{{ n }}" {% if kd and kd.nakshatra==n %}selected{% endif %}>{{ n }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-weight:700;font-size:14px;">Janma Rashi</label>
+            <select name="rashi" class="form-select" style="border-radius:8px;">
+              <option value="">-- Select Rashi --</option>
+              {% for r in rashis %}
+              <option value="{{ r }}" {% if kd and kd.rashi==r %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Charan (Pada)</label>
+            <select name="charan" class="form-select" style="border-radius:8px;">
+              <option value="">--</option>
+              {% for c in [1,2,3,4] %}
+              <option value="{{ c }}" {% if kd and kd.charan==c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Gana</label>
+            <select name="gana" class="form-select" style="border-radius:8px;">
+              <option value="">--</option>
+              {% for g in ganas %}
+              <option value="{{ g }}" {% if kd and kd.gana==g %}selected{% endif %}>{{ g }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Nadi</label>
+            <select name="nadi" class="form-select" style="border-radius:8px;">
+              <option value="">--</option>
+              {% for n in nadis %}
+              <option value="{{ n }}" {% if kd and kd.nadi==n %}selected{% endif %}>{{ n }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight:600;font-size:13px;">Manglik</label>
+            <select name="manglik" class="form-select" style="border-radius:8px;">
+              <option value="">--</option>
+              {% for m in ['Yes','No','Partial'] %}
+              <option value="{{ m }}" {% if kd and kd.manglik==m %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-ij-ghost mt-3" style="padding:10px 24px;border-radius:8px;">
+          Save Manual Entry
+        </button>
+      </form>
+    </div>
+  </details>
+
+</div>
+
+<script>
+// Live preview via AJAX
+document.getElementById('preview-btn').addEventListener('click', async () => {
+  const date = document.getElementById('dob').value;
+  const time = document.getElementById('btime').value;
+  const city = document.getElementById('bcity').value;
+  if (!date || !city) { alert('Please enter date and city at minimum.'); return; }
+  document.getElementById('loading').style.display = 'flex';
+  try {
+    const r = await fetch(`/kundli/api/calculate?date=${date}&time=${time || '12:00'}&city=${encodeURIComponent(city)}`);
+    const d = await r.json();
+    if (d.error) { alert('Error: ' + d.error); return; }
+    const fields = [
+      ['Nakshatra', d.nakshatra], ['Rashi', d.rashi], ['Charan', d.charan],
+      ['Gana', d.gana], ['Nadi', d.nadi], ['Manglik', d.manglik]
+    ];
+    document.getElementById('preview-content').innerHTML = fields.map(([l,v]) =>
+      `<div style="background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #bbf7d0;">
+        <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">${l}</div>
+        <div style="font-weight:700;font-size:13.5px;margin-top:2px;">${v || '—'}</div>
+      </div>`
+    ).join('');
+    document.getElementById('preview-notes').textContent = d.notes || '';
+    document.getElementById('preview-box').style.display = 'block';
+  } catch(e) { alert('Calculation failed. Please try again.'); }
+  finally { document.getElementById('loading').style.display = 'none'; }
+});
+
+// City autocomplete
+document.getElementById('bcity').addEventListener('input', async (e) => {
+  const q = e.target.value;
+  if (q.length < 2) return;
+  try {
+    const r = await fetch(`/kundli/api/cities?q=${encodeURIComponent(q)}`);
+    const cities = await r.json();
+    const dl = document.getElementById('city-suggestions');
+    dl.innerHTML = cities.map(c => `<option value="${c}">`).join('');
+  } catch(e) {}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'onboarding/base_step.html' %}
+{% set title = "Who are you looking for?" %}
+{% block step_content %}
+<h2 style="font-weight:800;font-size:1.3rem;margin-bottom:4px;">Who are you looking for?</h2>
+<p style="color:var(--text-2);font-size:13.5px;margin-bottom:24px;">
+  We'll use this to show you the most compatible profiles.
+</p>
+
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+    <div>
+      <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Min Age</label>
+      <select name="min_age" class="form-select" style="border-radius:8px;">
+        <option value="">Any</option>
+        {% for a in range(18, 55) %}
+        <option value="{{ a }}" {% if pref and pref.min_age == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Max Age</label>
+      <select name="max_age" class="form-select" style="border-radius:8px;">
+        <option value="">Any</option>
+        {% for a in range(20, 70) %}
+        <option value="{{ a }}" {% if pref and pref.max_age == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-bottom:18px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Preferred Religion</label>
+    <select name="religion" class="form-select" style="border-radius:8px;">
+      <option value="">Any religion</option>
+      {% for r in religions %}{% if r %}
+      <option value="{{ r }}" {% if pref and pref.religion == r %}selected{% endif %}>{{ r }}</option>
+      {% endif %}{% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:28px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Preferred City / Location</label>
+    <input type="text" name="location_preference"
+           value="{{ pref.location_preference if pref else '' }}"
+           placeholder="e.g. Mumbai, Pune, Any"
+           class="form-control" style="border-radius:8px;padding:10px 14px;">
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button type="submit" name="skip" value="1"
+            style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:10px;
+                   background:#fff;font-weight:600;font-size:14px;cursor:pointer;color:var(--text-2);">
+      Skip
+    </button>
+    <button type="submit" class="btn-ij-primary" style="flex:2;padding:12px;border-radius:10px;font-size:15px;">
+      See My Matches <i class="bi bi-heart-fill ms-2"></i>
+    </button>
+  </div>
+</form>
+{% endblock %}

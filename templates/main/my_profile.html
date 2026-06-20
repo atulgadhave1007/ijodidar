@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% block title %}{{ user.full_name }} – iJodidar{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-3 px-md-4 py-4">
+  <div class="row g-4 justify-content-center">
+
+    <!-- ═══════════════════════════════════════════════════════
+         LEFT / MAIN COLUMN
+    ═══════════════════════════════════════════════════════ -->
+    <div class="col-xl-8 col-lg-7">
+
+      <!-- HERO CARD -->
+      <div class="card shadow-sm rounded-4 overflow-hidden mb-4">
+
+        <!-- Photo carousel / cover -->
+        <div class="position-relative" style="height:340px;background:#f3f4f6;">
+          {% set extra_imgs = user.profile_images | selectattr('is_primary','equalto',False) | list %}
+          {% set pri        = user.profile_images | selectattr('is_primary','equalto',True)  | first %}
+
+          {% if extra_imgs %}
+          <div id="bgCarousel" class="carousel slide h-100" data-bs-ride="carousel">
+            <div class="carousel-inner h-100">
+              {% for img in extra_imgs %}
+              <div class="carousel-item {% if loop.first %}active{% endif %} h-100">
+                {% if is_connected or is_own_profile %}
+                  <img src="{{ img.image_url }}" class="w-100 h-100" style="object-fit:cover;object-position:top;">
+                {% else %}
+                  <!-- Photo blur for unconnected visitors -->
+                  <div class="w-100 h-100 d-flex align-items-center justify-content-center flex-column"
+                       style="background:linear-gradient(135deg,#ffeef0,#fff0f5);">
+                    <div style="filter:blur(18px);width:100%;height:100%;position:absolute;top:0;left:0;background-image:url('{{ img.image_url }}');background-size:cover;background-position:top;"></div>
+                    <div class="position-relative text-center">
+                      <i class="bi bi-lock-fill text-danger" style="font-size:2.5rem;"></i>
+                      <p class="text-danger fw-semibold mt-2 mb-1">Photos are private</p>
+                      <p class="text-muted small">Connect to see full photos</p>
+                    </div>
+                  </div>
+                {% endif %}
+                {% if is_own_profile %}
+                <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
+                  <button class="btn btn-sm btn-light rounded-circle shadow-sm"
+                          data-bs-toggle="modal" data-bs-target="#uploadModal" title="Add photo">
+                    <i class="bi bi-camera-fill"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light rounded-circle shadow-sm"
+                          data-bs-toggle="modal" data-bs-target="#delModal{{ img.id }}" title="Delete">
+                    <i class="bi bi-trash-fill text-danger"></i>
+                  </button>
+                </div>
+                <!-- Delete modal -->
+                <div class="modal fade" id="delModal{{ img.id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content rounded-4">
+                      <div class="modal-body text-center p-4">
+                        <p class="fw-semibold mb-3">Delete this photo?</p>
+                        <img src="{{ img.image_url }}" class="img-fluid rounded-3 mb-3" style="max-height:120px;">
+                        <form method="POST" action="{{ url_for('profile.delete_image', image_id=img.id) }}">
+                          <button class="btn btn-danger rounded-pill w-100 mb-2">Delete</button>
+                          <button type="button" class="btn btn-outline-secondary rounded-pill w-100"
+                                  data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% if extra_imgs | length > 1 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#bgCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#bgCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="d-flex align-items-center justify-content-center h-100">
+            {% if is_own_profile %}
+            <button class="btn btn-outline-secondary rounded-pill px-4"
+                    data-bs-toggle="modal" data-bs-target="#uploadModal">
+              <i class="bi bi-camera-fill me-2"></i>Add Photos
+            </button>
+            {% else %}
+            <span class="text-muted small">No photos added yet</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Primary avatar bubble -->
+          <div class="position-absolute" style="left:1.5rem;bottom:-44px;">
+            {% if pri %}
+              {% if is_connected or is_own_profile %}
+              <img src="{{ pri.image_url | signed_url }}" class="rounded-circle shadow"
+                   style="width:110px;height:110px;object-fit:cover;border:4px solid white;">
+              {% else %}
+              <div class="rounded-circle shadow d-flex align-items-center justify-content-center bg-light"
+                   style="width:110px;height:110px;border:4px solid white;overflow:hidden;position:relative;">
+                <div style="filter:blur(12px);width:100%;height:100%;position:absolute;background-image:url('{{ pri.image_url }}');background-size:cover;"></div>
+                <i class="bi bi-person-fill text-muted position-relative" style="font-size:2.5rem;"></i>
+              </div>
+              {% endif %}
+            {% else %}
+            <div class="rounded-circle shadow bg-secondary text-white d-flex align-items-center justify-content-center fw-bold"
+                 style="width:110px;height:110px;border:4px solid white;font-size:2rem;">
+              {{ user.first_name[0] }}{{ user.last_name[0] }}
+            </div>
+            {% endif %}
+          </div>
+        </div><!-- /cover -->
+
+        <!-- Profile summary -->
+        <div class="card-body pt-5 mt-3 px-4 pb-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h3 class="fw-bold mb-0">{{ user.full_name }}</h3>
+                {% if user.is_verified %}
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">
+                  <i class="bi bi-patch-check-fill me-1"></i>Verified
+                </span>
+                {% endif %}
+                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 small">
+                  {{ user.plan_name }} Plan
+                </span>
+                {% if profile and profile.id_verified %}
+                <span class="badge rounded-pill px-2 small"
+                      style="background:#fff5c0;color:#78350f;font-size:10px;">
+                  <i class="bi bi-person-check-fill me-1"></i>ID Verified
+                </span>
+                {% endif %}
+                {% if profile and profile.is_nri %}
+                <span class="badge rounded-pill px-2 small"
+                      style="background:var(--blue-bg);color:var(--blue);font-size:10px;">
+                  <i class="bi bi-globe me-1"></i>NRI
+                </span>
+                {% endif %}
+                {% if match_score is not none and match_score > 0 %}
+                <span class="badge rounded-pill px-2 small
+                  {% if match_score >= 70 %}bg-success{% elif match_score >= 40 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                  <i class="bi bi-heart-fill me-1"></i>{{ match_score }}% Match
+                </span>
+                {% endif %}
+              </div>
+              <div class="text-muted mt-1" style="font-size:14px;">
+                {% if profile %}
+                  {% if profile.date_of_birth %}{{ profile.date_of_birth | age }} yrs{% endif %}
+                  {% if profile.gender %} &bull; {{ profile.gender }}{% endif %}
+                  {% if profile.religion %} &bull; {{ profile.religion }}{% endif %}
+                  {% if profile.marital_status %} &bull; {{ profile.marital_status }}{% endif %}
+                {% endif %}
+                {% if user.addresses and user.addresses[0].city %}
+                <br><i class="bi bi-geo-alt text-muted me-1"></i>{{ user.addresses[0].city.name }}, {{ user.addresses[0].state.name }}
+                {% endif %}
+              </div>
+              {% if profile and profile.looking_for %}
+              <div class="mt-2">
+                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">
+                  <i class="bi bi-heart me-1"></i>Looking for: {{ profile.looking_for }}
+                </span>
+              </div>
+              {% endif %}
+              {% if profile and profile.is_spotlight %}
+              <div class="mt-2">
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                  <i class="bi bi-star-fill me-1"></i>Spotlight Profile
+                </span>
+              </div>
+              {% endif %}
+              {% if manglik_info and not is_own_profile %}
+              <div class="mt-2">
+                <span class="badge rounded-pill px-3 py-2
+                  {% if manglik_info.compatible %}bg-success bg-opacity-10 text-success{% else %}bg-warning bg-opacity-10 text-warning{% endif %}">
+                  <i class="bi bi-{% if manglik_info.compatible %}check-circle{% else %}exclamation-triangle{% endif %}-fill me-1"></i>
+                  Manglik: {{ 'Compatible' if manglik_info.compatible else 'Check compatibility' }}
+                </span>
+                <div class="text-muted small mt-1">{{ manglik_info.message }}</div>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              {% if is_own_profile %}
+                <a href="{{ url_for('profile.profile') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                  <i class="bi bi-pencil me-1"></i>Edit Profile
+                </a>
+                <a href="{{ url_for('profile.privacy') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                  <i class="bi bi-shield-lock"></i>
+                </a>
+              {% else %}
+                <!-- SHORTLIST -->
+                <button class="btn btn-{{ 'warning' if is_shortlisted else 'outline-warning' }} rounded-circle p-2 shortlist-btn"
+                        data-user-id="{{ user.id }}" title="{{ 'Remove from shortlist' if is_shortlisted else 'Add to shortlist' }}"
+                        style="width:40px;height:40px;">
+                  <i class="bi bi-bookmark{% if is_shortlisted %}-fill{% endif %}"></i>
+                </button>
+
+                <!-- INTEREST BUTTON — state-aware -->
+                {% if interest_sent %}
+                  {% if interest_sent.status == 'pending' %}
+                  <form method="POST" action="{{ url_for('connect.withdraw_interest', interest_id=interest_sent.id) }}">
+                    <button class="btn btn-outline-secondary rounded-pill px-4">
+                      <i class="bi bi-hourglass-split me-1"></i>Pending
+                    </button>
+                  </form>
+                  {% elif interest_sent.status == 'accepted' %}
+                  <a href="{{ url_for('messaging.inbox') }}" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-chat-heart-fill me-1"></i>Chat Now
+                  </a>
+                  {% elif interest_sent.status == 'declined' %}
+                  <span class="btn btn-outline-danger rounded-pill px-4 disabled">
+                    <i class="bi bi-x-circle me-1"></i>Declined
+                  </span>
+                  {% elif interest_sent.status == 'withdrawn' %}
+                  <button class="btn btn-danger rounded-pill px-4"
+                          data-bs-toggle="modal" data-bs-target="#sendInterestModal">
+                    <i class="bi bi-heart me-1"></i>Send Interest
+                  </button>
+                  {% endif %}
+                {% elif interest_received %}
+                  {% if interest_received.status == 'pending' %}
+                  <div class="d-flex gap-2">
+                    <form method="POST" action="{{ url_for('connect.respond_interest', interest_id=interest_received.id, action='accept') }}">
+                      <button class="btn btn-success rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i>Accept
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('connect.respond_interest', interest_id=interest_received.id, action='decline') }}">
+                      <button class="btn btn-outline-danger rounded-pill px-3">
+                        <i class="bi bi-x-lg me-1"></i>Decline
+                      </button>
+                    </form>
+                  </div>
+                  {% elif interest_received.status == 'accepted' %}
+                  <a href="{{ url_for('messaging.inbox') }}" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-chat-heart-fill me-1"></i>Chat Now
+                  </a>
+                  {% endif %}
+                {% else %}
+                  <button class="btn btn-danger rounded-pill px-4 fw-semibold"
+                          data-bs-toggle="modal" data-bs-target="#sendInterestModal">
+                    <i class="bi bi-heart-fill me-1"></i>Send Interest
+                  </button>
+                {% endif %}
+
+                <!-- GUNA MILAN button -->
+                {% if not is_own_profile %}
+                <a href="{{ url_for('kundli.match_kundli', other_user_id=user.id) }}"
+                   class="btn btn-outline-warning btn-sm rounded-pill px-3"
+                   style="font-size:12px;" title="Kundli Compatibility">
+                  <i class="bi bi-stars me-1"></i>Guna Milan
+                </a>
+                {% endif %}
+
+                <!-- BLOCK / REPORT -->
+                {% if not is_blocked %}
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary rounded-circle p-2"
+                          data-bs-toggle="dropdown" style="width:40px;height:40px;">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow rounded-4 p-2">
+                    <li>
+                      <button class="dropdown-item rounded-3 text-warning small py-2"
+                              data-bs-toggle="modal" data-bs-target="#reportModal">
+                        <i class="bi bi-flag me-2"></i>Report Profile
+                      </button>
+                    </li>
+                    <li>
+                      <form method="POST" action="{{ url_for('connect.block_user', target_id=user.id) }}">
+                        <button type="submit" class="dropdown-item rounded-3 text-danger small py-2"
+                                onclick="return confirm('Block {{ user.first_name }}? They will not appear in your searches.')">
+                          <i class="bi bi-slash-circle me-2"></i>Block User
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+                {% else %}
+                <form method="POST" action="{{ url_for('connect.unblock_user', target_id=user.id) }}">
+                  <button class="btn btn-outline-secondary rounded-pill btn-sm px-3">
+                    <i class="bi bi-slash-circle me-1"></i>Unblock
+                  </button>
+                </form>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Interest message preview (received) -->
+          {% if interest_received and interest_received.status == 'pending' and interest_received.message %}
+          <div class="alert alert-info rounded-3 small mt-3 mb-0">
+            <i class="bi bi-chat-quote me-2"></i><em>"{{ interest_received.message }}"</em>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- BIO -->
+      {% if profile and profile.bio %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill text-danger me-2"></i>About Me</h5>
+            {% if is_own_profile %}<a href="{{ url_for('profile.bio') }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+          <p class="text-muted mb-0" style="line-height:1.7;">{{ profile.bio }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- PROFESSIONAL -->
+      {% set pro = user.professional_details[0] if user.professional_details else None %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-briefcase-fill text-danger me-2"></i>Profession</h5>
+            {% if is_own_profile %}<a href="{{ url_for('profile.professional') }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+          {% if pro and pro.company_name %}
+          <div class="d-flex gap-3 align-items-start">
+            <div class="bg-light rounded-3 p-2 flex-shrink-0"><i class="bi bi-building text-secondary fs-4"></i></div>
+            <div>
+              <div class="fw-semibold fs-5">{{ pro.company_name }}</div>
+              <div class="text-muted small">{{ pro.designation or '' }}{% if pro.occupation %} &bull; {{ pro.occupation }}{% endif %}{% if pro.employment_type %} &bull; {{ pro.employment_type }}{% endif %}</div>
+              {% if pro.years_of_experience %}<div class="text-muted small mt-1">{{ pro.years_of_experience }} yrs experience</div>{% endif %}
+              {% if pro.package %}<div class="text-muted small">Package: {{ pro.package }}</div>{% endif %}
+              {% if pro.location %}<div class="text-muted small"><i class="bi bi-geo-alt me-1"></i>{{ pro.location }}</div>{% endif %}
+            </div>
+          </div>
+          {% else %}<p class="text-muted mb-0 small">No professional details added yet.</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- EDUCATION -->
+      {% set edu = user.educations[0] if user.educations else None %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard-fill text-danger me-2"></i>Education</h5>
+            {% if is_own_profile %}<a href="{{ url_for('profile.education') }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+          {% if edu and edu.institution %}
+          <div class="d-flex gap-3 align-items-start">
+            <div class="bg-light rounded-3 p-2 flex-shrink-0"><i class="bi bi-book text-secondary fs-4"></i></div>
+            <div>
+              <div class="fw-semibold fs-5">{{ edu.institution }}</div>
+              <div class="text-muted small">{{ edu.degree }}{% if edu.specialization %} &bull; {{ edu.specialization }}{% endif %}</div>
+              {% if edu.year_of_passing %}<div class="text-muted small">Class of {{ edu.year_of_passing }}</div>{% endif %}
+              {% if edu.grade %}<div class="text-muted small">Grade: {{ edu.grade }}</div>{% endif %}
+            </div>
+          </div>
+          {% else %}<p class="text-muted mb-0 small">No education details added yet.</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- LANGUAGES -->
+      {% if user.languages %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-translate text-danger me-2"></i>Languages</h5>
+            {% if is_own_profile %}<a href="{{ url_for('profile.language') }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            {% for lang in user.languages %}
+            <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+              {{ lang.name }}{% if lang.proficiency %} <span class="text-muted">({{ lang.proficiency }})</span>{% endif %}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /main col -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         RIGHT SIDEBAR
+    ═══════════════════════════════════════════════════════ -->
+    <div class="col-xl-4 col-lg-5">
+
+      <!-- Birth & Personal Info -->
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">Birth &amp; Personal Info</h6>
+            {% if is_own_profile %}<a href="{{ url_for('profile.birthday') }}" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+          {% macro info_row(label, value) %}
+          <div class="d-flex py-2 border-bottom" style="font-size:13px;">
+            <span class="text-muted flex-shrink-0" style="width:130px;">{{ label }}</span>
+            <span class="fw-medium ms-2">{{ value or '—' }}</span>
+          </div>
+          {% endmacro %}
+          {% if profile %}
+            {% if profile.date_of_birth %}
+            {% set dob_d = datetime.strptime(profile.date_of_birth, '%Y-%m-%d') %}
+            {{ info_row('Date of Birth', dob_d.strftime('%B %d, %Y')) }}
+            {% endif %}
+            {{ info_row('Height', (profile.height|string + ' cm') if profile.height else None) }}
+            {{ info_row('Religion', profile.religion) }}
+            {{ info_row('Caste', profile.caste) }}
+            {{ info_row('Mother Tongue', profile.mother_tongue) }}
+            {{ info_row('Manglik', profile.manglik) }}
+            {{ info_row('Diet', profile.diet) }}
+            {{ info_row('Marital Status', profile.marital_status) }}
+            {{ info_row('Family Type', profile.family_type) }}
+            {% if is_own_profile or is_connected %}
+              {% if profile.birth_city %}{{ info_row('Birth City', profile.birth_city) }}{% endif %}
+              {% if profile.birth_state %}{{ info_row('Birth State', profile.birth_state) }}{% endif %}
+            {% endif %}
+          {% else %}<p class="text-muted small mb-0">No details added.</p>{% endif %}
+          {% if show_phone and user.phone %}
+          <div class="d-flex py-2 border-bottom" style="font-size:13px;">
+            <span class="text-muted flex-shrink-0" style="width:130px;">Phone</span>
+            <span class="fw-medium ms-2"><i class="bi bi-telephone-fill text-success me-1"></i>{{ user.phone }}</span>
+          </div>
+          {% elif not is_own_profile and not show_phone and user.phone %}
+          <div class="d-flex py-2 border-bottom" style="font-size:13px;">
+            <span class="text-muted flex-shrink-0" style="width:130px;">Phone</span>
+            <span class="text-muted ms-2 small"><i class="bi bi-lock-fill me-1"></i>Gold plan to view</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Profile Completion (own profile only) -->
+      {% if is_own_profile %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-1">Profile Completion</h6>
+          {% if profile_score < 50 %}<span class="text-danger small fw-medium"><i class="bi bi-exclamation-circle-fill me-1"></i>Needs attention</span>
+          {% elif profile_score < 75 %}<span class="text-warning small fw-medium"><i class="bi bi-info-circle-fill me-1"></i>Looking good</span>
+          {% else %}<span class="text-success small fw-medium"><i class="bi bi-check-circle-fill me-1"></i>Great profile!</span>{% endif %}
+          <div class="d-flex align-items-center gap-3 mt-3">
+            <div style="width:76px;height:76px;flex-shrink:0;"><canvas id="progressChart"></canvas></div>
+            <div><span class="fw-bold fs-3">{{ profile_score }}%</span><br><span class="text-muted small">completed</span></div>
+          </div>
+          <div class="progress mt-3" style="height:7px;border-radius:4px;">
+            <div class="progress-bar bg-{{ 'success' if profile_score>=75 else 'warning' if profile_score>=50 else 'danger' }}"
+                 style="width:{{ profile_score }}%"></div>
+          </div>
+          {% if profile_score < 100 %}
+          <div class="mt-3">
+            <a href="{{ url_for('profile.profile') }}" class="btn btn-sm btn-outline-danger rounded-pill w-100">
+              <i class="bi bi-arrow-up-circle me-1"></i>Complete Profile
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Who viewed my profile -->
+      {% if is_own_profile and viewed_by_users %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3"><i class="bi bi-eye text-danger me-1"></i>Recently Viewed By</h6>
+          {% for vu in viewed_by_users %}
+          <div class="d-flex align-items-center gap-3 mb-3" style="cursor:pointer;"
+               onclick="location.href='{{ url_for('main.user_profile', username=vu.username) }}'">
+            {% set vimg = vu.profile_images | selectattr('is_primary','equalto',True) | first %}
+            {% if vimg %}<img src="{{ vimg.image_url }}" class="rounded-circle flex-shrink-0" style="width:44px;height:44px;object-fit:cover;">
+            {% else %}<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:44px;height:44px;">{{ vu.first_name[0] }}{{ vu.last_name[0] }}</div>{% endif %}
+            <div>
+              <div class="fw-medium small">{{ vu.full_name }}</div>
+              <div class="text-muted" style="font-size:11.5px;">
+                {% if vu.profile and vu.profile.date_of_birth %}{{ vu.profile.date_of_birth | age }} yrs{% endif %}
+                {% if vu.professional_details and vu.professional_details[0].occupation %} &bull; {{ vu.professional_details[0].occupation }}{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Suggested profiles -->
+      {% if other_users %}
+      <div class="card shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3"><i class="bi bi-people text-danger me-1"></i>Profiles Near You</h6>
+          {% for ou in other_users %}
+          <div class="d-flex align-items-center gap-3 mb-3" style="cursor:pointer;"
+               onclick="location.href='{{ url_for('main.user_profile', username=ou.username) }}'">
+            {% set oimg = ou.profile_images | selectattr('is_primary','equalto',True) | first %}
+            {% if oimg %}<img src="{{ oimg.image_url }}" class="rounded-circle flex-shrink-0" style="width:44px;height:44px;object-fit:cover;">
+            {% else %}<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:44px;height:44px;">{{ ou.first_name[0] }}{{ ou.last_name[0] }}</div>{% endif %}
+            <div>
+              <div class="fw-medium small">{{ ou.full_name }}</div>
+              <div class="text-muted" style="font-size:11.5px;">
+                {% if ou.profile and ou.profile.date_of_birth %}{{ ou.profile.date_of_birth | age }} yrs{% endif %}
+                {% if ou.professional_details and ou.professional_details[0].occupation %} &bull; {{ ou.professional_details[0].occupation }}{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /sidebar -->
+  </div><!-- /row -->
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- Send Interest Modal -->
+{% if not is_own_profile and (not interest_sent or interest_sent.status == 'withdrawn') %}
+<div class="modal fade" id="sendInterestModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-heart-fill text-danger me-2"></i>Send Interest to {{ user.first_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4">
+        <form method="POST" action="{{ url_for('connect.send_interest', receiver_id=user.id) }}">
+          <div class="mb-3">
+            <label class="form-label small text-muted">Add a personal note <span class="text-muted">(optional)</span></label>
+            <textarea name="message" class="form-control" rows="3" maxlength="300"
+                      placeholder="Introduce yourself briefly…"></textarea>
+            <div class="form-text">Max 300 characters</div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold flex-grow-1">
+              <i class="bi bi-heart-fill me-2"></i>Send Interest
+            </button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Report Modal -->
+{% if not is_own_profile %}
+<div class="modal fade" id="reportModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-flag-fill text-warning me-2"></i>Report Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4">
+        <form method="POST" action="{{ url_for('connect.report_user', target_id=user.id) }}">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Reason</label>
+            <select name="reason" class="form-select" required>
+              <option value="">-- Select reason --</option>
+              {% for r in ['Fake profile','Inappropriate photos','Spam / Solicitation',
+                           'Harassment','Married but misrepresented','Other'] %}
+              <option value="{{ r }}">{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Additional details <span class="text-muted small">(optional)</span></label>
+            <textarea name="details" class="form-control" rows="3" maxlength="500"
+                      placeholder="Describe the issue…"></textarea>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-semibold">Submit Report</button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Upload Photo Modal (own profile only) -->
+{% if is_own_profile %}
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-0"><h5 class="modal-title fw-bold">Upload Photo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body px-4">
+        <input type="file" id="imageInput" accept="image/jpeg,image/png" class="form-control mb-3">
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="isPrimary">
+          <label class="form-check-label" for="isPrimary">Set as profile picture</label>
+        </div>
+        <div id="cropContainer" class="d-none border rounded-3 mb-3" style="max-height:300px;overflow:hidden;">
+          <img id="cropImage" style="max-width:100%;"></div>
+        <div id="cropToolbar" class="d-none d-flex gap-2 mb-3">
+          <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(0.1)">Zoom In</button>
+          <button class="btn btn-sm btn-outline-primary" onclick="zoomCrop(-0.1)">Zoom Out</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="resetCrop()">Reset</button>
+        </div>
+        <div class="progress d-none mb-2" id="uploadProgressWrapper" style="height:6px;">
+          <div class="progress-bar bg-success" id="uploadProgressBar" style="width:0%"></div></div>
+      </div>
+      <div class="modal-footer border-0 px-4">
+        <button id="uploadBtn" class="btn btn-danger rounded-pill px-4">Upload</button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="{{ url_for('static', filename='js/upload_cropper.js') }}"></script>
+{% if is_own_profile %}
+<script>
+const ctx = document.getElementById('progressChart');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [{{ profile_score }}, {{ 100 - profile_score }}],
+      backgroundColor: ['{% if profile_score >= 75 %}#198754{% elif profile_score >= 50 %}#ffc107{% else %}#dc3545{% endif %}','#e9ecef'],
+      borderWidth: 0 }] },
+    options: { cutout:'72%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } }
+  });
+}
+</script>
+{% endif %}
+<script>
+// Shortlist AJAX
+const sBtn = document.querySelector('.shortlist-btn');
+if (sBtn) {
+  sBtn.addEventListener('click', async () => {
+    const uid  = sBtn.dataset.userId;
+    const res  = await fetch(`/shortlist/toggle/${uid}`, {method:'POST'});
+    const data = await res.json();
+    if (data.success) {
+      const icon = sBtn.querySelector('i');
+      icon.className = data.action === 'added' ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+      sBtn.className = sBtn.className.replace(
+        data.action === 'added' ? 'btn-outline-warning' : 'btn-warning',
+        data.action === 'added' ? 'btn-warning' : 'btn-outline-warning'
+      );
+    }
+  });
+}
+</script>
+{% endblock %}

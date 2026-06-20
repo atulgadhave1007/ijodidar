@@ -1,0 +1,42 @@
+{% extends 'onboarding/base_step.html' %}
+{% set title = "Your career" %}
+{% block step_content %}
+<h2 style="font-weight:800;font-size:1.3rem;margin-bottom:4px;">Your career</h2>
+<p style="color:var(--text-2);font-size:13.5px;margin-bottom:24px;">
+  Families care about career. This helps matches find you.
+</p>
+
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div style="margin-bottom:18px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Occupation</label>
+    <input type="text" name="occupation" value="{{ pro.occupation if pro else '' }}"
+           placeholder="e.g. Software Engineer, Doctor, Teacher"
+           class="form-control" style="border-radius:8px;padding:10px 14px;">
+  </div>
+
+  <div style="margin-bottom:28px;">
+    <label style="font-weight:600;font-size:13px;color:var(--text-2);display:block;margin-bottom:6px;">Annual Income</label>
+    <select name="income_lpa" class="form-select" style="border-radius:8px;">
+      <option value="">Prefer not to say</option>
+      {% for val, label in income_bands %}
+      {% if val > 0 %}
+      <option value="{{ val }}" {% if pro and pro.income_lpa == val %}selected{% endif %}>{{ label }}</option>
+      {% endif %}
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button type="submit" name="skip" value="1"
+            style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:10px;
+                   background:#fff;font-weight:600;font-size:14px;cursor:pointer;color:var(--text-2);">
+      Skip
+    </button>
+    <button type="submit" class="btn-ij-primary" style="flex:2;padding:12px;border-radius:10px;font-size:15px;">
+      Continue <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+</form>
+{% endblock %}
