@@ -56,7 +56,7 @@ class UserSubscription(db.Model):
         limit = self.plan.max_interests if self.plan else 5
         if limit <= 0:
             return 999   # unlimited
-        return max(0, limit - self.interests_this_month)
+        return max(0, limit - (self.interests_this_month or 0))
 
 
 # ─────────────────────────────────────────────
