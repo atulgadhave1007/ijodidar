@@ -752,6 +752,191 @@ def nri_status():
     return render_template('profile/nri.html', user=current_user, profile=p)
 
 
+# ── UNIFIED PROFILE EDITOR ─────────────────────────────────────────────────
+@profile_bp.route('/profile/edit')
+@login_required
+def profile_edit():
+    from app.models import PartnerPreference
+    from app.utils_kundli import MARATHI_SUB_CASTES, HOBBIES
+    import json
+    u    = current_user
+    p    = u.profile
+    pro  = ProfessionalDetails.query.filter_by(user_id=u.id).first()
+    edu  = Education.query.filter_by(user_id=u.id).first()
+    pref = PartnerPreference.query.filter_by(user_id=u.id).first()
+    perm = Address.query.filter_by(user_id=u.id, tag='Permanent').first()
+    curr = Address.query.filter_by(user_id=u.id, tag='Current').first()
+    cities    = City.query.order_by(City.name).all()
+    states    = State.query.order_by(State.name).all()
+    countries = Country.query.order_by(Country.name).all()
+    current_hobbies = json.loads(p.hobbies) if p and p.hobbies else []
+    tab = request.args.get('tab', 'basic')
+    return render_template('profile/edit.html',
+        user=u, profile=p, professional=pro, education=edu, pref=pref,
+        permanent=perm, current_addr=curr,
+        cities=cities, states=states, countries=countries,
+        marathi_sub_castes=MARATHI_SUB_CASTES,
+        all_hobbies=HOBBIES,
+        current_hobbies=current_hobbies,
+        active_tab=tab,
+    )
+
+
+@profile_bp.route('/profile/save/<section>', methods=['POST'])
+@login_required
+def profile_save(section):
+    from flask import jsonify
+    u = current_user
+
+    try:
+        if section == 'basic':
+            fn = request.form.get('first_name', '').strip()
+            ln = request.form.get('last_name', '').strip()
+            if not fn or not ln:
+                return jsonify(success=False, message='Name fields cannot be empty.')
+            u.first_name = fn
+            u.last_name  = ln
+            p = _get_or_create_profile()
+            p.gender      = request.form.get('gender', '').strip() or p.gender
+            p.looking_for = request.form.get('looking_for', '').strip() or None
+            p.bio         = request.form.get('bio', '').strip()[:1000] or None
+            h = request.form.get('height', '').strip()
+            p.height = int(h) if h.isdigit() else p.height
+            # birthday
+            mn, dv, yv = request.form.get('month'), request.form.get('date'), request.form.get('year')
+            if mn and dv and yv:
+                try:
+                    from datetime import datetime as _dt
+                    m   = _dt.strptime(mn, '%B').month
+                    dob = _dt(int(yv), m, int(dv)).date()
+                    p.date_of_birth = dob.strftime('%Y-%m-%d')
+                    p.birth_time    = request.form.get('birth_time', '').strip() or None
+                    p.birth_village = request.form.get('birth_village', '').strip() or None
+                    p.birth_city    = request.form.get('birth_city', '').strip() or None
+                    p.birth_state   = request.form.get('birth_state', '').strip() or None
+                    p.birth_country = request.form.get('birth_country', '').strip() or None
+                except Exception:
+                    return jsonify(success=False, message='Invalid date of birth.')
+            db.session.commit()
+
+        elif section == 'community':
+            p = _get_or_create_profile()
+            p.religion          = request.form.get('religion', '').strip() or None
+            p.caste             = request.form.get('caste', '').strip() or None
+            p.sub_caste         = request.form.get('sub_caste', '').strip() or None
+            p.marathi_sub_caste = request.form.get('marathi_sub_caste', '').strip() or None
+            p.gotra             = request.form.get('gotra', '').strip() or None
+            p.mother_tongue     = request.form.get('mother_tongue', '').strip() or None
+            p.manglik           = request.form.get('manglik', '').strip() or None
+            p.is_nri            = request.form.get('is_nri') == '1'
+            p.nri_country       = request.form.get('nri_country', '').strip() or None
+            db.session.commit()
+
+        elif section == 'lifestyle':
+            p = _get_or_create_profile()
+            p.diet           = request.form.get('diet', '').strip() or None
+            p.smoking        = request.form.get('smoking', '').strip() or None
+            p.drinking       = request.form.get('drinking', '').strip() or None
+            p.marital_status = request.form.get('marital_status', '').strip() or None
+            p.have_children  = request.form.get('have_children', '').strip() or None
+            p.family_type    = request.form.get('family_type', '').strip() or None
+            p.family_status  = request.form.get('family_status', '').strip() or None
+            p.complexion     = request.form.get('complexion', '').strip() or None
+            p.body_type      = request.form.get('body_type', '').strip() or None
+            db.session.commit()
+
+        elif section == 'career':
+            pro = ProfessionalDetails.query.filter_by(user_id=u.id).first()
+            if not pro:
+                pro = ProfessionalDetails(user_id=u.id)
+                db.session.add(pro)
+            pro.occupation      = request.form.get('occupation', '').strip() or None
+            pro.company_name    = request.form.get('company_name', '').strip() or None
+            pro.designation     = request.form.get('designation', '').strip() or None
+            pro.employment_type = request.form.get('employment_type', '').strip() or None
+            inc = request.form.get('income_lpa', '').strip()
+            pro.income_lpa = int(inc) if inc.isdigit() else None
+            exp = request.form.get('years_of_experience', '').strip()
+            pro.years_of_experience = int(exp) if exp.isdigit() else None
+            # Education
+            edu = Education.query.filter_by(user_id=u.id).first()
+            if not edu:
+                edu = Education(user_id=u.id)
+                db.session.add(edu)
+            edu.degree         = request.form.get('degree', '').strip() or None
+            edu.specialization = request.form.get('specialization', '').strip() or None
+            edu.university     = request.form.get('university', '').strip() or None
+            edu.institution    = request.form.get('institution', '').strip() or None
+            yop = request.form.get('year_of_passing', '').strip()
+            edu.year_of_passing = int(yop) if yop.isdigit() else None
+            db.session.commit()
+
+        elif section == 'location':
+            tag = request.form.get('tag', 'Permanent')
+            if tag not in ('Permanent', 'Current'):
+                return jsonify(success=False, message='Invalid address tag.')
+            addr = Address.query.filter_by(user_id=u.id, tag=tag).first()
+            if not addr:
+                addr = Address(user_id=u.id, tag=tag)
+                db.session.add(addr)
+            try:
+                addr.city_id    = int(request.form.get('city_id', 0)) or None
+                addr.state_id   = int(request.form.get('state_id', 0)) or None
+                addr.country_id = int(request.form.get('country_id', 0)) or None
+            except (TypeError, ValueError):
+                return jsonify(success=False, message='Invalid location selection.')
+            addr.address1 = request.form.get('address1', '').strip() or None
+            addr.zipcode  = request.form.get('zipcode', '').strip() or None
+            db.session.commit()
+
+        elif section == 'hobbies':
+            import json as _json
+            p = _get_or_create_profile()
+            selected = request.form.getlist('hobbies')[:20]
+            p.hobbies = _json.dumps(selected)
+            db.session.commit()
+
+        elif section == 'preferences':
+            from app.models import PartnerPreference
+            pref = PartnerPreference.query.filter_by(user_id=u.id).first()
+            if not pref:
+                pref = PartnerPreference(user_id=u.id)
+                db.session.add(pref)
+            def _int(key):
+                v = request.form.get(key, '').strip()
+                try: return int(v) if v else None
+                except ValueError: return None
+            def _str(key):
+                v = request.form.get(key, '').strip()
+                return v if v else None
+            pref.min_age         = _int('min_age')
+            pref.max_age         = _int('max_age')
+            pref.min_height      = _int('min_height')
+            pref.max_height      = _int('max_height')
+            pref.min_income_lpa  = _int('min_income_lpa')
+            pref.max_income_lpa  = _int('max_income_lpa')
+            pref.religion        = _str('religion')
+            pref.caste           = _str('caste')
+            pref.mother_tongue   = _str('mother_tongue')
+            pref.marital_status  = _str('marital_status')
+            pref.education_level = _str('education_level')
+            pref.manglik         = _str('manglik')
+            pref.diet            = _str('diet')
+            pref.smoking         = _str('smoking')
+            pref.drinking        = _str('drinking')
+            pref.about           = request.form.get('about', '').strip()[:500] or None
+            db.session.commit()
+
+        else:
+            return jsonify(success=False, message='Unknown section.')
+
+        return jsonify(success=True, message='Saved successfully.')
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message='Save failed. Please try again.')
+
+
 # ── LANGUAGE PREFERENCE (Phase 13.2) ──────────────────────────────────────
 @profile_bp.route('/set-language', methods=['POST'])
 @login_required

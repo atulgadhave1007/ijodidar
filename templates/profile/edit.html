@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile – iJodidar{% endblock %}
+{% block content %}
+<div class="ij-container" style="max-width:860px;">
+
+  <!-- Page header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('profile.profile') }}" class="btn-ij-ghost" style="padding:6px 14px;">
+      <i class="bi bi-arrow-left"></i>Back
+    </a>
+    <div>
+      <h4 style="margin:0;font-weight:700;">Edit Profile</h4>
+      <div style="font-size:13px;color:var(--text-2);">All changes save instantly</div>
+    </div>
+  </div>
+
+  <!-- Save toast -->
+  <div id="save-toast" style="
+    display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+    background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.15);
+    padding:14px 20px;font-size:14px;font-weight:500;min-width:240px;
+    border-left:4px solid var(--green);align-items:center;gap:10px;">
+    <i class="bi bi-check-circle-fill" style="color:var(--green);font-size:1.1rem;"></i>
+    <span id="save-toast-msg">Saved!</span>
+  </div>
+
+  <!-- Tab nav -->
+  <div class="ij-card mb-3 p-2">
+    <div class="d-flex gap-1 flex-wrap" id="profile-tab-nav">
+      {% set tabs = [
+        ('basic',       'bi-person',         'Basic'),
+        ('community',   'bi-globe2',         'Community'),
+        ('lifestyle',   'bi-heart-pulse',    'Lifestyle'),
+        ('career',      'bi-briefcase',      'Career'),
+        ('location',    'bi-geo-alt',        'Location'),
+        ('hobbies',     'bi-stars',          'Hobbies'),
+        ('preferences', 'bi-sliders',        'Preferences'),
+      ] %}
+      {% for t_id, t_icon, t_label in tabs %}
+      <button type="button"
+        class="tab-btn btn btn-sm rounded-pill fw-semibold px-3 {% if active_tab == t_id %}btn-danger{% else %}btn-light text-muted{% endif %}"
+        data-tab="{{ t_id }}"
+        style="font-size:13px;">
+        <i class="bi {{ t_icon }} me-1"></i>{{ t_label }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── TAB: BASIC ──────────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'basic' %}d-none{% endif %}" id="tab-basic">
+    <h6 class="fw-bold mb-3"><i class="bi bi-person me-2 text-danger"></i>Basic Details</h6>
+    <form data-section="basic">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">First Name</label>
+          <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Last Name</label>
+          <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Gender</label>
+          <select name="gender" class="form-select">
+            <option value="">Select gender</option>
+            {% for g in ['Male','Female','Other'] %}
+            <option value="{{ g }}" {% if profile and profile.gender == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Looking For</label>
+          <select name="looking_for" class="form-select">
+            <option value="">Select</option>
+            {% for g in ['Male','Female','Other'] %}
+            <option value="{{ g }}" {% if profile and profile.looking_for == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Birth Month</label>
+          <select name="month" class="form-select">
+            <option value="">Month</option>
+            {% for m in ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+            {% set dob_month = '' %}
+            {% if profile and profile.date_of_birth %}
+              {% set dob_month = profile.date_of_birth | replace('-','/') %}
+            {% endif %}
+            <option value="{{ m }}">{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Birth Day</label>
+          <input type="number" name="date" class="form-control" min="1" max="31"
+            value="{% if profile and profile.date_of_birth %}{{ profile.date_of_birth.split('-')[2] | int }}{% endif %}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Birth Year</label>
+          <input type="number" name="year" class="form-control" min="1950" max="2006"
+            value="{% if profile and profile.date_of_birth %}{{ profile.date_of_birth.split('-')[0] }}{% endif %}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Birth Time <span class="text-muted fw-normal">(optional)</span></label>
+          <input type="time" name="birth_time" class="form-control"
+            value="{{ profile.birth_time or '' if profile else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Birth City <span class="text-muted fw-normal">(for Kundli)</span></label>
+          <input type="text" name="birth_city" class="form-control"
+            value="{{ profile.birth_city or '' if profile else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold" style="font-size:13px;">Height (cm)</label>
+          <input type="number" name="height" class="form-control" min="100" max="250"
+            value="{{ profile.height or '' if profile else '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold" style="font-size:13px;">About Me</label>
+          <textarea name="bio" class="form-control" rows="4" maxlength="1000"
+            placeholder="Write something about yourself…">{{ profile.bio or '' if profile else '' }}</textarea>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Max 1000 characters</div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn-ij-primary">Save Basic Details</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TAB: COMMUNITY ─────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'community' %}d-none{% endif %}" id="tab-community">
+    <h6 class="fw-bold mb-3"><i class="bi bi-globe2 me-2 text-danger"></i>Religion & Community</h6>
+    <form data-section="community">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Religion</label>
+          <select name="religion" class="form-select">
+            <option value="">Select</option>
+            {% for r in ['Hindu','Muslim','Christian','Sikh','Buddhist','Jain','Other'] %}
+            <option value="{{ r }}" {% if profile and profile.religion == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Caste</label>
+          <input type="text" name="caste" class="form-control"
+            value="{{ profile.caste or '' if profile else '' }}" placeholder="e.g. Brahmin, Maratha…">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Sub Caste</label>
+          <input type="text" name="sub_caste" class="form-control"
+            value="{{ profile.sub_caste or '' if profile else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Marathi Sub Caste</label>
+          <select name="marathi_sub_caste" class="form-select">
+            <option value="">Select</option>
+            {% for sc in marathi_sub_castes %}
+            <option value="{{ sc }}" {% if profile and profile.marathi_sub_caste == sc %}selected{% endif %}>{{ sc }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Gotra</label>
+          <input type="text" name="gotra" class="form-control"
+            value="{{ profile.gotra or '' if profile else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Mother Tongue</label>
+          <select name="mother_tongue" class="form-select">
+            <option value="">Select</option>
+            {% for lang in ['Marathi','Hindi','English','Gujarati','Bengali','Tamil','Telugu','Kannada','Punjabi','Other'] %}
+            <option value="{{ lang }}" {% if profile and profile.mother_tongue == lang %}selected{% endif %}>{{ lang }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Manglik</label>
+          <select name="manglik" class="form-select">
+            <option value="">Select</option>
+            {% for m in ['Yes','No','Partial','Anshik'] %}
+            <option value="{{ m }}" {% if profile and profile.manglik == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">NRI Status</label>
+          <select name="is_nri" class="form-select" id="nri-select">
+            <option value="0" {% if not (profile and profile.is_nri) %}selected{% endif %}>Not NRI</option>
+            <option value="1" {% if profile and profile.is_nri %}selected{% endif %}>NRI</option>
+          </select>
+        </div>
+        <div class="col-md-6" id="nri-country-row" {% if not (profile and profile.is_nri) %}style="display:none"{% endif %}>
+          <label class="form-label fw-semibold" style="font-size:13px;">NRI Country</label>
+          <input type="text" name="nri_country" class="form-control"
+            value="{{ profile.nri_country or '' if profile else '' }}" placeholder="e.g. USA, UAE…">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn-ij-primary">Save Community Details</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TAB: LIFESTYLE ─────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'lifestyle' %}d-none{% endif %}" id="tab-lifestyle">
+    <h6 class="fw-bold mb-3"><i class="bi bi-heart-pulse me-2 text-danger"></i>Lifestyle</h6>
+    <form data-section="lifestyle">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        {% set lifestyle_fields = [
+          ('marital_status', 'Marital Status', ['Never Married','Divorced','Widowed','Awaiting Divorce']),
+          ('diet',    'Diet',    ['Vegetarian','Non-Vegetarian','Eggetarian','Vegan','Jain']),
+          ('smoking', 'Smoking', ['Non Smoker','Smoker','Occasionally']),
+          ('drinking','Drinking',['Non Drinker','Social Drinker','Occasionally']),
+          ('have_children','Children',['No','Yes','Yes but not staying']),
+          ('family_type','Family Type',['Nuclear','Joint','Extended']),
+          ('family_status','Family Status',['Middle Class','Upper Middle Class','Rich','Affluent']),
+          ('body_type','Body Type',['Slim','Athletic','Average','Heavy']),
+          ('complexion','Complexion',['Fair','Wheatish','Dark']),
+        ] %}
+        {% for field_name, field_label, options in lifestyle_fields %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">{{ field_label }}</label>
+          <select name="{{ field_name }}" class="form-select">
+            <option value="">Select</option>
+            {% set cur_val = profile | attr(field_name) if profile else '' %}
+            {% for opt in options %}
+            <option value="{{ opt }}" {% if cur_val == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn-ij-primary">Save Lifestyle Details</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TAB: CAREER ────────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'career' %}d-none{% endif %}" id="tab-career">
+    <h6 class="fw-bold mb-3"><i class="bi bi-briefcase me-2 text-danger"></i>Career & Education</h6>
+    <form data-section="career">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <p class="text-muted" style="font-size:13px;">Professional Details</p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Occupation</label>
+          <input type="text" name="occupation" class="form-control"
+            value="{{ professional.occupation or '' if professional else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Employment Type</label>
+          <select name="employment_type" class="form-select">
+            <option value="">Select</option>
+            {% for et in ['Private Sector','Government / PSU','Self Employed','Business','Defense / Civil Services','Not Working'] %}
+            <option value="{{ et }}" {% if professional and professional.employment_type == et %}selected{% endif %}>{{ et }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Company / Employer</label>
+          <input type="text" name="company_name" class="form-control"
+            value="{{ professional.company_name or '' if professional else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Designation</label>
+          <input type="text" name="designation" class="form-control"
+            value="{{ professional.designation or '' if professional else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Annual Income (LPA)</label>
+          <input type="number" name="income_lpa" class="form-control" min="0" max="999"
+            value="{{ professional.income_lpa or '' if professional else '' }}"
+            placeholder="e.g. 8">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Years of Experience</label>
+          <input type="number" name="years_of_experience" class="form-control" min="0" max="50"
+            value="{{ professional.years_of_experience or '' if professional else '' }}">
+        </div>
+      </div>
+      <hr class="my-4">
+      <p class="text-muted" style="font-size:13px;">Education</p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Highest Degree</label>
+          <select name="degree" class="form-select">
+            <option value="">Select</option>
+            {% for d in ['High School','Diploma','B.A.','B.Sc.','B.Com.','B.E. / B.Tech.','M.A.','M.Sc.','M.Com.','M.E. / M.Tech.','MBA','MCA','BCA','Ph.D.','Other'] %}
+            <option value="{{ d }}" {% if education and education.degree == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Specialization</label>
+          <input type="text" name="specialization" class="form-control"
+            value="{{ education.specialization or '' if education else '' }}"
+            placeholder="e.g. Computer Science">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Institution / College</label>
+          <input type="text" name="institution" class="form-control"
+            value="{{ education.institution or '' if education else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">University</label>
+          <input type="text" name="university" class="form-control"
+            value="{{ education.university or '' if education else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Year of Passing</label>
+          <input type="number" name="year_of_passing" class="form-control" min="1990" max="2030"
+            value="{{ education.year_of_passing or '' if education else '' }}">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn-ij-primary">Save Career & Education</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── TAB: LOCATION ──────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'location' %}d-none{% endif %}" id="tab-location">
+    <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2 text-danger"></i>Location</h6>
+    {% for addr_tag, addr_obj in [('Permanent', permanent), ('Current', current_addr)] %}
+    <div class="mb-4">
+      <p class="fw-semibold" style="font-size:14px;margin-bottom:12px;">{{ addr_tag }} Address</p>
+      <form data-section="location">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="tag" value="{{ addr_tag }}">
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label fw-semibold" style="font-size:13px;">Street Address</label>
+            <input type="text" name="address1" class="form-control"
+              value="{{ addr_obj.address1 if addr_obj else '' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" style="font-size:13px;">City</label>
+            <select name="city_id" class="form-select">
+              <option value="">Select city</option>
+              {% for city in cities %}
+              <option value="{{ city.id }}" {% if addr_obj and addr_obj.city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" style="font-size:13px;">State</label>
+            <select name="state_id" class="form-select">
+              <option value="">Select state</option>
+              {% for state in states %}
+              <option value="{{ state.id }}" {% if addr_obj and addr_obj.state_id == state.id %}selected{% endif %}>{{ state.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" style="font-size:13px;">PIN Code</label>
+            <input type="text" name="zipcode" class="form-control" maxlength="10"
+              value="{{ addr_obj.zipcode if addr_obj else '' }}">
+          </div>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn-ij-primary" style="font-size:13px;padding:8px 18px;">
+            Save {{ addr_tag }} Address
+          </button>
+        </div>
+      </form>
+    </div>
+    {% if not loop.last %}<hr class="my-4">{% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- ── TAB: HOBBIES ───────────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'hobbies' %}d-none{% endif %}" id="tab-hobbies">
+    <h6 class="fw-bold mb-3"><i class="bi bi-stars me-2 text-danger"></i>Hobbies & Interests</h6>
+    <p style="font-size:13px;color:var(--text-2);">Select up to 20 that describe you.</p>
+    <form data-section="hobbies">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for hobby in all_hobbies %}
+        <label class="hobby-chip {% if hobby in current_hobbies %}selected{% endif %}">
+          <input type="checkbox" name="hobbies" value="{{ hobby }}"
+            {% if hobby in current_hobbies %}checked{% endif %} style="display:none;">
+          {{ hobby }}
+        </label>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn-ij-primary">Save Hobbies</button>
+    </form>
+  </div>
+
+  <!-- ── TAB: PREFERENCES ───────────────────────────────────────────────── -->
+  <div class="tab-pane ij-card p-4 {% if active_tab != 'preferences' %}d-none{% endif %}" id="tab-preferences">
+    <h6 class="fw-bold mb-3"><i class="bi bi-sliders me-2 text-danger"></i>Partner Preferences</h6>
+    <form data-section="preferences">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Age Range</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input type="number" name="min_age" class="form-control" placeholder="Min" min="18" max="80"
+              value="{{ pref.min_age or '' if pref else '' }}">
+            <span style="color:var(--text-3);">to</span>
+            <input type="number" name="max_age" class="form-control" placeholder="Max" min="18" max="80"
+              value="{{ pref.max_age or '' if pref else '' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Height Range (cm)</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input type="number" name="min_height" class="form-control" placeholder="Min"
+              value="{{ pref.min_height or '' if pref else '' }}">
+            <span style="color:var(--text-3);">to</span>
+            <input type="number" name="max_height" class="form-control" placeholder="Max"
+              value="{{ pref.max_height or '' if pref else '' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Income Range (LPA)</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input type="number" name="min_income_lpa" class="form-control" placeholder="Min"
+              value="{{ pref.min_income_lpa or '' if pref else '' }}">
+            <span style="color:var(--text-3);">to</span>
+            <input type="number" name="max_income_lpa" class="form-control" placeholder="Max"
+              value="{{ pref.max_income_lpa or '' if pref else '' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Religion</label>
+          <select name="religion" class="form-select">
+            <option value="">Any</option>
+            {% for r in ['Hindu','Muslim','Christian','Sikh','Buddhist','Jain','Other'] %}
+            <option value="{{ r }}" {% if pref and pref.religion == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Caste</label>
+          <input type="text" name="caste" class="form-control" placeholder="Any"
+            value="{{ pref.caste or '' if pref else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Mother Tongue</label>
+          <select name="mother_tongue" class="form-select">
+            <option value="">Any</option>
+            {% for lang in ['Marathi','Hindi','English','Gujarati','Bengali','Tamil','Telugu','Kannada','Punjabi','Other'] %}
+            <option value="{{ lang }}" {% if pref and pref.mother_tongue == lang %}selected{% endif %}>{{ lang }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Marital Status</label>
+          <select name="marital_status" class="form-select">
+            <option value="">Any</option>
+            {% for m in ['Never Married','Divorced','Widowed'] %}
+            <option value="{{ m }}" {% if pref and pref.marital_status == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Manglik</label>
+          <select name="manglik" class="form-select">
+            <option value="">Any</option>
+            {% for m in ['Yes','No','Partial'] %}
+            <option value="{{ m }}" {% if pref and pref.manglik == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Diet</label>
+          <select name="diet" class="form-select">
+            <option value="">Any</option>
+            {% for d in ['Vegetarian','Non-Vegetarian','Eggetarian','Vegan'] %}
+            <option value="{{ d }}" {% if pref and pref.diet == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:13px;">Education Level</label>
+          <select name="education_level" class="form-select">
+            <option value="">Any</option>
+            {% for e in ['High School','Graduate','Post Graduate','Doctorate'] %}
+            <option value="{{ e }}" {% if pref and pref.education_level == e %}selected{% endif %}>{{ e }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold" style="font-size:13px;">Additional Preferences <span class="text-muted fw-normal">(optional)</span></label>
+          <textarea name="about" class="form-control" rows="3" maxlength="500"
+            placeholder="Any other preferences…">{{ pref.about or '' if pref else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn-ij-primary">Save Preferences</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<style>
+.tab-pane { transition: none; }
+.hobby-chip {
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  background: var(--surface);
+  user-select: none;
+  transition: all .15s;
+}
+.hobby-chip:hover { border-color: var(--brand); color: var(--brand); }
+.hobby-chip.selected {
+  background: var(--brand-alpha);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+</style>
+
+<script>
+(function () {
+  const toast     = document.getElementById('save-toast');
+  const toastMsg  = document.getElementById('save-toast-msg');
+  let toastTimer;
+
+  function showToast(msg, ok) {
+    toastMsg.textContent = msg;
+    toast.style.borderLeftColor = ok ? 'var(--green)' : 'var(--brand)';
+    toast.querySelector('i').className = ok
+      ? 'bi bi-check-circle-fill'
+      : 'bi bi-exclamation-circle-fill';
+    toast.querySelector('i').style.color = ok ? 'var(--green)' : 'var(--brand)';
+    toast.style.display = 'flex';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.style.display = 'none', 3000);
+  }
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('btn-danger', b.dataset.tab === target);
+        b.classList.toggle('btn-light',  b.dataset.tab !== target);
+        b.classList.toggle('text-muted', b.dataset.tab !== target);
+      });
+      document.querySelectorAll('.tab-pane').forEach(p => {
+        p.classList.toggle('d-none', p.id !== 'tab-' + target);
+      });
+      history.replaceState(null, '', '?tab=' + target);
+    });
+  });
+
+  // Hobby chip toggle
+  document.querySelectorAll('.hobby-chip').forEach(chip => {
+    chip.addEventListener('click', () => chip.classList.toggle('selected'));
+  });
+
+  // AJAX form submission
+  document.querySelectorAll('form[data-section]').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const section = form.dataset.section;
+      const btn     = form.querySelector('button[type=submit]');
+      const orig    = btn.textContent;
+      btn.disabled    = true;
+      btn.textContent = 'Saving…';
+      try {
+        const fd  = new FormData(form);
+        const res = await fetch('/profile/save/' + section, {method: 'POST', body: fd});
+        const json = await res.json();
+        showToast(json.message || (json.success ? 'Saved!' : 'Save failed.'), json.success);
+      } catch (err) {
+        showToast('Network error. Please retry.', false);
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = orig;
+      }
+    });
+  });
+
+  // NRI country visibility
+  const nriSel = document.getElementById('nri-select');
+  const nriRow = document.getElementById('nri-country-row');
+  if (nriSel && nriRow) {
+    nriSel.addEventListener('change', () => {
+      nriRow.style.display = nriSel.value === '1' ? '' : 'none';
+    });
+  }
+})();
+</script>
+{% endblock %}
