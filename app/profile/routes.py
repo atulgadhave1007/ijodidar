@@ -881,10 +881,7 @@ def profile_save(section):
             tag = request.form.get('tag', 'Permanent')
             if tag not in ('Permanent', 'Current'):
                 return jsonify(success=False, message='Invalid address tag.')
-            addr = Address.query.filter_by(user_id=u.id, tag=tag).first()
-            if not addr:
-                addr = Address(user_id=u.id, tag=tag)
-                db.session.add(addr)
+
             def _int_id(key):
                 v = request.form.get(key, '').strip()
                 try:
@@ -892,11 +889,41 @@ def profile_save(section):
                     return n if n > 0 else None
                 except (TypeError, ValueError):
                     return None
-            addr.city_id    = _int_id('city_id')
-            addr.state_id   = _int_id('state_id')
-            addr.country_id = _int_id('country_id')
-            addr.address1 = request.form.get('address1', '').strip() or None
-            addr.zipcode  = request.form.get('zipcode', '').strip() or None
+
+            city_id    = _int_id('city_id')
+            state_id   = _int_id('state_id')
+            country_id = _int_id('country_id')
+            address1   = request.form.get('address1', '').strip()
+            zipcode    = request.form.get('zipcode',  '').strip()
+
+            addr = Address.query.filter_by(user_id=u.id, tag=tag).first()
+            if addr:
+                # Update only provided fields; keep existing values for nullable=False cols
+                if address1:
+                    addr.address1 = address1
+                if zipcode:
+                    addr.zipcode = zipcode
+                if city_id:
+                    addr.city_id = city_id
+                if state_id:
+                    addr.state_id = state_id
+                if country_id:
+                    addr.country_id = country_id
+            else:
+                # New address — city/state/country are nullable=False in DB
+                # Require at minimum address1; use placeholder IDs if not provided
+                if not address1:
+                    return jsonify(success=False, message='Street address is required.')
+                addr = Address(
+                    user_id    = u.id,
+                    tag        = tag,
+                    address1   = address1,
+                    zipcode    = zipcode or '',
+                    city_id    = city_id    or 1,
+                    state_id   = state_id   or 1,
+                    country_id = country_id or 1,
+                )
+                db.session.add(addr)
             db.session.commit()
 
         elif section == 'hobbies':

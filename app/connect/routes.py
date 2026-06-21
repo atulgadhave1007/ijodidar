@@ -200,19 +200,19 @@ def withdraw_interest(interest_id):
 @connect_bp.route('/interests')
 @login_required
 def my_interests():
-    sent     = (Interest.query
-                .filter_by(sender_id=current_user.id)
-                .filter(Interest.status.in_(['pending', 'declined']))
-                .order_by(Interest.sent_at.desc()).all())
-    received = (Interest.query
-                .filter_by(receiver_id=current_user.id)
-                .order_by(Interest.sent_at.desc()).all())
-    pending  = [i for i in received if i.status == 'pending']
-    # accepted: interests the user sent that were accepted + interests received that user accepted
-    # tag each with which side current_user is on so template can show the right other-person
-    sent_accepted     = [i for i in sent     if i.status == 'accepted']
-    received_accepted = [i for i in received if i.status == 'accepted']
-    declined = [i for i in received if i.status == 'declined']
+    sent_all  = (Interest.query
+                 .filter_by(sender_id=current_user.id)
+                 .filter(Interest.status != 'withdrawn')
+                 .order_by(Interest.sent_at.desc()).all())
+    received  = (Interest.query
+                 .filter_by(receiver_id=current_user.id)
+                 .order_by(Interest.sent_at.desc()).all())
+    # Sent tab: only pending/declined — accepted ones live in Accepted tab
+    sent              = [i for i in sent_all if i.status in ('pending', 'declined')]
+    sent_accepted     = [i for i in sent_all if i.status == 'accepted']
+    received_accepted = [i for i in received  if i.status == 'accepted']
+    pending           = [i for i in received  if i.status == 'pending']
+    declined          = [i for i in received  if i.status == 'declined']
     return render_template('connect/interests.html',
                            user=current_user,
                            sent=sent, pending=pending,
