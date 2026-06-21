@@ -288,8 +288,8 @@ def send_sms_task(self, phone: str, otp: str):
             resp = req.get(
                 "https://www.fast2sms.com/dev/bulkV2",
                 params={"authorization": fast2sms_key,
-                        "variables_values": otp,
-                        "route": "otp",
+                        "message": f"Your iJodidar verification code is {otp}. Valid for 10 minutes. Do not share.",
+                        "route": "q",
                         "numbers": phone},
                 headers={"cache-control": "no-cache"},
                 timeout=10,
