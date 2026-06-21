@@ -208,12 +208,17 @@ def my_interests():
                 .filter_by(receiver_id=current_user.id)
                 .order_by(Interest.sent_at.desc()).all())
     pending  = [i for i in received if i.status == 'pending']
-    accepted = [i for i in received if i.status == 'accepted']
+    # accepted: interests the user sent that were accepted + interests received that user accepted
+    # tag each with which side current_user is on so template can show the right other-person
+    sent_accepted     = [i for i in sent     if i.status == 'accepted']
+    received_accepted = [i for i in received if i.status == 'accepted']
     declined = [i for i in received if i.status == 'declined']
     return render_template('connect/interests.html',
                            user=current_user,
                            sent=sent, pending=pending,
-                           accepted=accepted, declined=declined)
+                           sent_accepted=sent_accepted,
+                           received_accepted=received_accepted,
+                           declined=declined)
 
 
 # ── SHORTLIST ──────────────────────────────────────────────────────────────

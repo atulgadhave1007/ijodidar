@@ -78,7 +78,7 @@
           <div class="col-md-4">
             <label class="form-label" style="font-weight:600;font-size:13px;">Date of Birth</label>
             <input type="date" name="birth_date" id="dob"
-                   value="{{ kd.birth_date if kd else '' }}"
+                   value="{{ prefill_date }}"
                    class="form-control" style="border-radius:8px;" required>
           </div>
           <div class="col-md-4">
@@ -87,13 +87,13 @@
               <span style="font-size:10px;color:var(--text-3);font-weight:400;">(local time)</span>
             </label>
             <input type="time" name="birth_time" id="btime"
-                   value="{{ kd.birth_time if kd else '' }}"
+                   value="{{ prefill_time }}"
                    class="form-control" style="border-radius:8px;" required>
           </div>
           <div class="col-md-4">
             <label class="form-label" style="font-weight:600;font-size:13px;">Birth City</label>
             <input type="text" name="birth_city" id="bcity"
-                   value="{{ kd.birth_city if kd else '' }}"
+                   value="{{ prefill_city }}"
                    placeholder="Pune, Mumbai, Nagpur…"
                    class="form-control" style="border-radius:8px;" required
                    autocomplete="off" list="city-suggestions">

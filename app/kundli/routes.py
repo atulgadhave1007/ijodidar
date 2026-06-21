@@ -116,8 +116,32 @@ def edit_kundli():
     ganas    = ['Deva', 'Manushya', 'Rakshasa']
     nadis    = ['Adi', 'Madhya', 'Antya']
 
+    # Pre-fill birth details from Profile if KundliDetail not yet saved
+    p = current_user.profile
+    prefill_date = ''
+    prefill_time = ''
+    prefill_city = ''
+    if kd:
+        prefill_date = kd.birth_date or ''
+        prefill_time = kd.birth_time or ''
+        prefill_city = kd.birth_city or ''
+    if p:
+        if not prefill_date:
+            # profile stores date_of_birth as 'YYYY-MM-DD' string or dob as Date
+            if p.dob:
+                prefill_date = p.dob.strftime('%Y-%m-%d')
+            elif p.date_of_birth:
+                prefill_date = str(p.date_of_birth)
+        if not prefill_time and p.birth_time:
+            prefill_time = p.birth_time
+        if not prefill_city and p.birth_city:
+            prefill_city = p.birth_city
+
     return render_template('kundli/edit.html',
                            user=current_user, kd=kd,
+                           prefill_date=prefill_date,
+                           prefill_time=prefill_time,
+                           prefill_city=prefill_city,
                            nakshatras=nakshatra_names, rashis=rashis,
                            ganas=ganas, nadis=nadis)
 

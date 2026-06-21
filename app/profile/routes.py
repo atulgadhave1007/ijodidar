@@ -766,10 +766,16 @@ def profile_edit():
     pref = PartnerPreference.query.filter_by(user_id=u.id).first()
     perm = Address.query.filter_by(user_id=u.id, tag='Permanent').first()
     curr = Address.query.filter_by(user_id=u.id, tag='Current').first()
-    cities    = City.query.order_by(City.name).all()
+    cities    = City.query.order_by(City.name).limit(500).all()
     states    = State.query.order_by(State.name).all()
     countries = Country.query.order_by(Country.name).all()
-    current_hobbies = json.loads(p.hobbies) if p and p.hobbies else []
+    try:
+        raw = p.hobbies if p and p.hobbies else None
+        current_hobbies = json.loads(raw) if raw else []
+        if not isinstance(current_hobbies, list):
+            current_hobbies = []
+    except Exception:
+        current_hobbies = []
     tab = request.args.get('tab', 'basic')
     return render_template('profile/edit.html',
         user=u, profile=p, professional=pro, education=edu, pref=pref,
