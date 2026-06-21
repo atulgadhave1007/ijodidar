@@ -4,7 +4,7 @@
 ## v2 TRANSFORMATION STATUS
 _Last updated: 2026-06-20 by Claude Code (Sprint 2 complete)_
 
-### Current Sprint: Sprint 2 — COMPLETE | Next: Sprint 3
+### Current Sprint: Sprint 3 — IN PROGRESS | Prev: Sprint 2 COMPLETE
 
 ### Maturity Scorecard (Sprint 1 vs baseline)
 | Dimension | Baseline | Current | Trend |
@@ -97,12 +97,27 @@ _Last updated: 2026-06-20 by Claude Code (Sprint 2 complete)_
 | templates/auth/verify_phone.html | 2026-06-20 | Claude Code Sprint 1 |
 | migrations/versions/f1a2b3c4d5e6_sprint1_income_columns.py | 2026-06-20 | Claude Code Sprint 1 |
 
-### Next Session Should (Sprint 3 — Weeks 6–7)
-1. **REST API Phase 2**: interests, conversations, notifications, devices endpoints (`app/api/interests.py`, `conversations.py`, `notifications.py`, `devices.py`).
-2. **UserDevice model + migration**: `user_id`, `fcm_token`, `platform`, `app_version`, `last_seen` — required for Firebase push (Sprint 5).
-3. **Unified profile editor**: replace 22–26 profile edit pages with tabbed `/profile` editor (AJAX sections). Old routes 301-redirect.
-4. **Wire income columns**: update partner preferences form + search to use `min_income_lpa`/`max_income_lpa` Integer columns (C8 — model columns exist, UI not yet wired).
-5. **Read** `API_ARCHITECTURE.md` (in `claude-code-setup/docs/audits/`) for the full Phase 2 endpoint spec before writing any new API routes.
+### Sprint 3 Deliverables — Status
+| Item | Status | Notes |
+|---|---|---|
+| UserDevice model + migration | DONE | `user_devices` table; migration a3b4c5d6e7f8 |
+| app/api/interests.py | DONE | POST /interests; GET /received /sent /accepted; PATCH /<id> |
+| app/api/conversations.py | DONE | GET /conversations; GET /<id>/messages; POST /<id>/messages; PATCH /<id>/read |
+| app/api/notifications.py | DONE | GET /notifications; GET /unread-count; PATCH /read |
+| app/api/devices.py | DONE | POST /devices; DELETE /devices/<fcm_token> |
+| schemas: Interest, ConversationSummary, Message, Notification | DONE | Added to app/api/schemas.py |
+| Register all new blueprints | DONE | app/api/__init__.py |
+| fix: main/routes.py missing `request` + `flash` import | DONE | |
+| fix: api_ok() — empty list returned as {} | DONE | `data if data is not None else {}` |
+| **EC2 deploy** | PENDING | git pull + flask db upgrade a3b4c5d6e7f8 + restart |
+| Unified profile editor | PENDING | Sprint 3 remainder |
+| Wire income columns in search | PENDING | Sprint 3 remainder |
+
+### Next Steps (Sprint 3 completion)
+1. Deploy to EC2: `git pull && flask db upgrade a3b4c5d6e7f8 && sudo systemctl restart ijodidar`
+2. Smoke test: `POST /api/v1/interests` with valid JWT
+3. Unified profile editor (tabbed `/profile` page, 301 from old routes)
+4. Wire `min_income_lpa`/`max_income_lpa` to search and partner preferences form
 
 # iJodidar â€” Project Status
 ## v25 Auto-Kundli | Complete Production Build | June 2026

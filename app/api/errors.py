@@ -27,7 +27,7 @@ def api_error(code: str, message: str, status: int = 400, field: str = None):
 
 
 def api_ok(data=None, meta=None, status: int = 200):
-    body = {'success': True, 'data': data or {}}
+    body = {'success': True, 'data': data if data is not None else {}}
     if meta:
         body['meta'] = meta
     return jsonify(body), status

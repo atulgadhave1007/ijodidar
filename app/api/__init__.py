@@ -10,11 +10,19 @@ from flask_jwt_extended import JWTManager
 api_v1_bp = Blueprint('api_v1', __name__)
 
 # ── Sub-blueprints ────────────────────────────────────────────────────────────
-from app.api.auth     import auth_api_bp
-from app.api.profiles import profiles_api_bp
+from app.api.auth          import auth_api_bp
+from app.api.profiles      import profiles_api_bp
+from app.api.interests     import interests_api_bp
+from app.api.conversations import conversations_api_bp
+from app.api.notifications import notifications_api_bp
+from app.api.devices       import devices_api_bp
 
-api_v1_bp.register_blueprint(auth_api_bp,     url_prefix='/auth')
-api_v1_bp.register_blueprint(profiles_api_bp, url_prefix='/profiles')
+api_v1_bp.register_blueprint(auth_api_bp,           url_prefix='/auth')
+api_v1_bp.register_blueprint(profiles_api_bp,       url_prefix='/profiles')
+api_v1_bp.register_blueprint(interests_api_bp,      url_prefix='/interests')
+api_v1_bp.register_blueprint(conversations_api_bp,  url_prefix='/conversations')
+api_v1_bp.register_blueprint(notifications_api_bp,  url_prefix='/notifications')
+api_v1_bp.register_blueprint(devices_api_bp,        url_prefix='/devices')
 
 
 # ── JWT error handlers (return JSON, not HTML) ────────────────────────────────

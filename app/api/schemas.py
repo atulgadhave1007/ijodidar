@@ -228,7 +228,112 @@ class ProfileFullSchema(ProfileCardSchema):
         }
 
 
+class InterestSchema(Schema):
+    id             = fields.Int(dump_only=True)
+    sender_id      = fields.Int(dump_only=True)
+    receiver_id    = fields.Int(dump_only=True)
+    status         = fields.Str(dump_only=True)
+    message        = fields.Str(dump_only=True)
+    sent_at        = fields.DateTime(dump_only=True)
+    updated_at     = fields.DateTime(dump_only=True)
+    other_user     = fields.Method('get_other_user')
+    conversation_id = fields.Method('get_conversation_id')
+
+    def get_other_user(self, obj):
+        from flask_jwt_extended import get_jwt_identity
+        try:
+            uid = int(get_jwt_identity())
+        except Exception:
+            uid = None
+        target = obj.receiver if (uid and obj.sender_id == uid) else obj.sender
+        return {
+            'id': target.id,
+            'username': target.username,
+            'first_name': target.first_name,
+            'photo_url': next(
+                (img.image_url for img in target.profile_images if img.is_primary),
+                target.profile_images[0].image_url if target.profile_images else None
+            ),
+        }
+
+    def get_conversation_id(self, obj):
+        from app.models import Conversation
+        u1, u2 = sorted([obj.sender_id, obj.receiver_id])
+        conv = Conversation.query.filter_by(user1_id=u1, user2_id=u2).first()
+        return conv.id if conv else None
+
+
+class MessageSchema(Schema):
+    id              = fields.Int(dump_only=True)
+    conversation_id = fields.Int(dump_only=True)
+    sender_id       = fields.Int(dump_only=True)
+    body            = fields.Str(dump_only=True)
+    is_read         = fields.Bool(dump_only=True)
+    sent_at         = fields.DateTime(dump_only=True)
+
+
+class ConversationSummarySchema(Schema):
+    id           = fields.Int(dump_only=True)
+    other_user   = fields.Method('get_other_user')
+    last_message = fields.Method('get_last_message')
+    unread_count = fields.Method('get_unread_count')
+    updated_at   = fields.DateTime(dump_only=True)
+
+    def get_other_user(self, obj):
+        from flask_jwt_extended import get_jwt_identity
+        try:
+            uid = int(get_jwt_identity())
+        except Exception:
+            uid = None
+        target = obj.other_user(uid) if uid else obj.user2
+        return {
+            'id': target.id,
+            'username': target.username,
+            'first_name': target.first_name,
+            'photo_url': next(
+                (img.image_url for img in target.profile_images if img.is_primary),
+                target.profile_images[0].image_url if target.profile_images else None
+            ),
+        }
+
+    def get_last_message(self, obj):
+        msg = obj.last_message()
+        if not msg:
+            return None
+        return {'id': msg.id, 'body': msg.body, 'sender_id': msg.sender_id,
+                'sent_at': msg.sent_at.isoformat()}
+
+    def get_unread_count(self, obj):
+        from flask_jwt_extended import get_jwt_identity
+        from app.models import Message
+        try:
+            uid = int(get_jwt_identity())
+        except Exception:
+            return 0
+        return (Message.query
+                .filter_by(conversation_id=obj.id, is_read=False)
+                .filter(Message.sender_id != uid)
+                .count())
+
+
+class NotificationSchema(Schema):
+    id         = fields.Int(dump_only=True)
+    type       = fields.Str(dump_only=True)
+    message    = fields.Str(dump_only=True)
+    link       = fields.Str(dump_only=True)
+    is_read    = fields.Bool(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+
+
 user_schema        = UserSchema()
 profile_card_schema = ProfileCardSchema()
 profile_cards_schema = ProfileCardSchema(many=True)
 profile_full_schema  = ProfileFullSchema()
+interest_schema      = InterestSchema()
+interests_schema     = InterestSchema(many=True)
+message_schema       = MessageSchema()
+messages_schema      = MessageSchema(many=True)
+conv_summary_schema  = ConversationSummarySchema()
+convs_summary_schema = ConversationSummarySchema(many=True)
+notification_schema  = NotificationSchema()
+notifications_schema = NotificationSchema(many=True)

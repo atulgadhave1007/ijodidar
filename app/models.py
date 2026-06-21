@@ -800,3 +800,21 @@ class AdminUser(db.Model):
 
     def __repr__(self):
         return f'<AdminUser {self.email} ({self.role})>'
+
+
+# ─────────────────────────────────────────────
+#  USER DEVICE  (Sprint 3 — FCM push tokens)
+# ─────────────────────────────────────────────
+class UserDevice(db.Model):
+    """FCM push token registry for mobile push notifications."""
+    __tablename__ = 'user_devices'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    fcm_token   = db.Column(db.String(300), nullable=False, unique=True)
+    platform    = db.Column(db.String(10), nullable=False)   # android | ios | web
+    app_version = db.Column(db.String(20), nullable=True)
+    last_seen   = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref='devices')
