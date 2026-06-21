@@ -3,6 +3,7 @@
 {% block content %}
 <div class="d-flex align-items-center justify-content-center" style="min-height:80vh;">
   <div class="card rounded-4 shadow-sm p-4" style="width:100%;max-width:420px;">
+
     <div class="text-center mb-4">
       <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center
                   justify-content-center mb-3" style="width:60px;height:60px;">
@@ -10,23 +11,30 @@
       </div>
       <h5 class="fw-bold mb-1">Verify Your Phone</h5>
       {% if current_user.phone %}
-        <p class="text-muted small mb-0">Enter the 6-digit OTP sent to
-          <strong>+91 {{ current_user.phone }}</strong>
+        <p class="text-muted small mb-0">
+          OTP sent to <strong>+91 {{ current_user.phone }}</strong>
         </p>
       {% else %}
         <p class="text-muted small mb-0">Enter your phone number to receive an OTP.</p>
       {% endif %}
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' }} py-2 small rounded-3">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {# ── Step 1: No phone yet — show entry form ── #}
     {% if not current_user.phone %}
-      {# Phone not yet on file — show phone entry form first #}
       <form method="POST" action="{{ url_for('auth.send_phone_otp') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
           <div class="input-group">
             <span class="input-group-text">+91</span>
             <input type="tel" name="phone" class="form-control form-control-lg"
-                   maxlength="10" pattern="[0-9]{10}" placeholder="10-digit mobile number"
-                   autofocus required>
+                   maxlength="10" pattern="[0-9]{10}"
+                   placeholder="10-digit mobile number" autofocus required>
           </div>
           <div class="form-text">We'll send a 6-digit OTP to verify this number.</div>
         </div>
@@ -34,33 +42,77 @@
           <i class="bi bi-send me-2"></i>Send OTP
         </button>
       </form>
+
+    {# ── Step 2: Phone set — show OTP form + inline change option ── #}
     {% else %}
-      {# Phone on file — show OTP entry #}
-      <form method="POST">
-        <div class="mb-4">
-          <input type="text" name="otp" class="form-control form-control-lg text-center
-                 fw-bold rounded-pill letter-spacing-2"
-                 maxlength="6" pattern="[0-9]{6}" placeholder="— — — — — —"
-                 autofocus required style="font-size:1.5rem;letter-spacing:.5rem;">
-          <div class="form-text text-center">OTP valid for 10 minutes</div>
+
+      {# OTP entry #}
+      <div id="otp-section">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-4">
+            <input type="text" name="otp" id="otp-input"
+                   class="form-control form-control-lg text-center fw-bold rounded-pill"
+                   maxlength="6" pattern="[0-9]{6}" placeholder="— — — — — —"
+                   autofocus required
+                   style="font-size:1.5rem;letter-spacing:.5rem;">
+            <div class="form-text text-center">OTP valid for 10 minutes</div>
+          </div>
+          <button type="submit" class="btn btn-success rounded-pill w-100 fw-semibold py-2">
+            <i class="bi bi-check-circle me-2"></i>Verify OTP
+          </button>
+        </form>
+
+        <hr class="my-3">
+
+        {# Resend #}
+        <form method="POST" action="{{ url_for('auth.send_phone_otp') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="phone" value="{{ current_user.phone }}">
+          <button type="submit" class="btn btn-link text-muted w-100 small text-decoration-none">
+            <i class="bi bi-arrow-clockwise me-1"></i>Resend OTP to +91 {{ current_user.phone }}
+          </button>
+        </form>
+
+        {# Change number toggle #}
+        <div class="text-center mt-1">
+          <button type="button" class="btn btn-link text-muted small text-decoration-none"
+                  onclick="document.getElementById('otp-section').classList.add('d-none');
+                           document.getElementById('change-section').classList.remove('d-none');">
+            <i class="bi bi-pencil me-1"></i>Wrong number? Change it
+          </button>
         </div>
-        <button type="submit" class="btn btn-success rounded-pill w-100 fw-semibold py-2">
-          <i class="bi bi-check-circle me-2"></i>Verify OTP
-        </button>
-      </form>
-      <hr class="my-3">
-      <form method="POST" action="{{ url_for('auth.send_phone_otp') }}">
-        <input type="hidden" name="phone" value="{{ current_user.phone }}">
-        <button type="submit" class="btn btn-link text-muted w-100 small text-decoration-none">
-          <i class="bi bi-arrow-clockwise me-1"></i>Resend OTP
-        </button>
-      </form>
-      <div class="text-center mt-2">
-        <a href="{{ url_for('profile.phone') }}" class="text-muted small text-decoration-none">
-          <i class="bi bi-arrow-left me-1"></i>Change phone number
-        </a>
       </div>
+
+      {# Change number form (hidden by default) #}
+      <div id="change-section" class="d-none">
+        <p class="text-muted small text-center mb-3">Enter the correct number and we'll send a fresh OTP.</p>
+        <form method="POST" action="{{ url_for('auth.send_phone_otp') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text">+91</span>
+              <input type="tel" name="phone" class="form-control form-control-lg"
+                     maxlength="10" pattern="[0-9]{10}"
+                     placeholder="New 10-digit number"
+                     value="{{ current_user.phone }}" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success rounded-pill w-100 fw-semibold py-2">
+            <i class="bi bi-send me-2"></i>Send OTP to New Number
+          </button>
+        </form>
+        <div class="text-center mt-2">
+          <button type="button" class="btn btn-link text-muted small text-decoration-none"
+                  onclick="document.getElementById('change-section').classList.add('d-none');
+                           document.getElementById('otp-section').classList.remove('d-none');">
+            <i class="bi bi-arrow-left me-1"></i>Back to OTP entry
+          </button>
+        </div>
+      </div>
+
     {% endif %}
+
   </div>
 </div>
 {% endblock %}

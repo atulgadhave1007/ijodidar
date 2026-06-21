@@ -315,9 +315,12 @@ def send_phone_otp():
 
     # Store hashed OTP — never store plaintext OTP in database
     from werkzeug.security import generate_password_hash
+    number_changed = current_user.phone != phone
     current_user.phone            = phone
-    current_user.phone_otp        = generate_password_hash(otp)   # hashed
+    current_user.phone_otp        = generate_password_hash(otp)
     current_user.phone_otp_expiry = expiry
+    if number_changed:
+        current_user.phone_verified = False   # must re-verify after number change
     db.session.commit()
 
     if _send_sms_otp(phone, otp):   # send plaintext OTP to user via SMS
