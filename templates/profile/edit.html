@@ -559,9 +559,15 @@
     });
   });
 
-  // Hobby chip toggle
+  // Hobby chip toggle — e.preventDefault() stops browser re-firing click on
+  // the nested hidden checkbox (which would bubble back and double-toggle)
   document.querySelectorAll('.hobby-chip').forEach(chip => {
-    chip.addEventListener('click', () => chip.classList.toggle('selected'));
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      chip.classList.toggle('selected');
+      const cb = chip.querySelector('input[type=checkbox]');
+      if (cb) cb.checked = !cb.checked;
+    });
   });
 
   // AJAX form submission

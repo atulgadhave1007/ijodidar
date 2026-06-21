@@ -202,7 +202,7 @@ def withdraw_interest(interest_id):
 def my_interests():
     sent     = (Interest.query
                 .filter_by(sender_id=current_user.id)
-                .filter(Interest.status != 'withdrawn')
+                .filter(Interest.status.in_(['pending', 'declined']))
                 .order_by(Interest.sent_at.desc()).all())
     received = (Interest.query
                 .filter_by(receiver_id=current_user.id)

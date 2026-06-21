@@ -885,12 +885,16 @@ def profile_save(section):
             if not addr:
                 addr = Address(user_id=u.id, tag=tag)
                 db.session.add(addr)
-            try:
-                addr.city_id    = int(request.form.get('city_id', 0)) or None
-                addr.state_id   = int(request.form.get('state_id', 0)) or None
-                addr.country_id = int(request.form.get('country_id', 0)) or None
-            except (TypeError, ValueError):
-                return jsonify(success=False, message='Invalid location selection.')
+            def _int_id(key):
+                v = request.form.get(key, '').strip()
+                try:
+                    n = int(v)
+                    return n if n > 0 else None
+                except (TypeError, ValueError):
+                    return None
+            addr.city_id    = _int_id('city_id')
+            addr.state_id   = _int_id('state_id')
+            addr.country_id = _int_id('country_id')
             addr.address1 = request.form.get('address1', '').strip() or None
             addr.zipcode  = request.form.get('zipcode', '').strip() or None
             db.session.commit()
