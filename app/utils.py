@@ -330,6 +330,18 @@ def calculate_match_score(current_user, candidate):
     return base_score
 
 
+def get_cached_match_score(current_user, candidate):
+    """calculate_match_score with 1-hour Redis cache. Falls back to live calc on error."""
+    from app.cache import cache_get, cache_set
+    key = f'match_score:{current_user.id}:{candidate.id}'
+    cached = cache_get(key)
+    if cached is not None:
+        return cached
+    score = calculate_match_score(current_user, candidate)
+    cache_set(key, score, ttl=3600)
+    return score
+
+
 def create_notification(user_id, notif_type, message, link=None):
     """Create an in-app notification. Safe to call anywhere."""
     try:

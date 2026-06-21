@@ -63,19 +63,30 @@
       {% endif %}
 
       {% for m in messages %}
-      <div class="d-flex {% if m.sender_id == current_user.id %}justify-content-end{% endif %} mb-2"
+      <div class="d-flex {% if m.sender_id == current_user.id %}justify-content-end{% endif %} mb-2 msg-row"
            id="msg-{{ m.id }}">
-        <div class="px-3 py-2 rounded-4
-                    {% if m.sender_id == current_user.id %}bg-danger text-white{% else %}bg-light text-dark{% endif %}"
-             style="max-width:72%;font-size:14px;word-break:break-word;">
-          {{ m.body }}
-          <div class="{% if m.sender_id == current_user.id %}text-white opacity-75{% else %}text-muted{% endif %}
-                      text-end" style="font-size:10px;margin-top:2px;">
-            {{ m.sent_at.strftime('%I:%M %p') }}
-            {% if m.sender_id == current_user.id %}
-            <i class="bi bi-check{% if m.is_read %}-all text-info{% endif %} ms-1"></i>
-            {% endif %}
+        <div class="position-relative msg-bubble-wrap"
+             style="max-width:72%;">
+          <div class="px-3 py-2 rounded-4
+                      {% if m.sender_id == current_user.id %}bg-danger text-white{% else %}bg-light text-dark{% endif %}"
+               style="font-size:14px;word-break:break-word;">
+            {{ m.body }}
+            <div class="{% if m.sender_id == current_user.id %}text-white opacity-75{% else %}text-muted{% endif %}
+                        text-end" style="font-size:10px;margin-top:2px;">
+              {{ m.sent_at.strftime('%I:%M %p') }}
+              {% if m.sender_id == current_user.id %}
+              <i class="bi bi-check{% if m.is_read %}-all text-info{% endif %} ms-1"></i>
+              {% endif %}
+            </div>
           </div>
+          <button class="btn-delete-msg"
+                  onclick="deleteMsg({{ m.id }}, {{ conv.id }})"
+                  title="Delete for me"
+                  style="position:absolute;top:2px;{% if m.sender_id == current_user.id %}left:-22px;{% else %}right:-22px;{% endif %}
+                         background:none;border:none;color:#aaa;font-size:12px;padding:2px 4px;
+                         cursor:pointer;opacity:0;transition:opacity .15s;">
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
       </div>
       {% endfor %}
@@ -205,5 +216,34 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')
           .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ─── Delete message ────────────────────────────────────────────────────────
+async function deleteMsg(msgId, convId) {
+  if (!confirm('Remove this message for you?')) return;
+  try {
+    const res = await fetch(`/messages/${convId}/${msgId}/delete`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest',
+                 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '' }
+    });
+    const d = await res.json();
+    if (d.success) {
+      const el = document.getElementById('msg-' + msgId);
+      if (el) el.remove();
+    }
+  } catch(e) {}
+}
+
+// Show delete button on hover
+document.querySelectorAll('.msg-bubble-wrap').forEach(wrap => {
+  wrap.addEventListener('mouseenter', () => {
+    const btn = wrap.querySelector('.btn-delete-msg');
+    if (btn) btn.style.opacity = '1';
+  });
+  wrap.addEventListener('mouseleave', () => {
+    const btn = wrap.querySelector('.btn-delete-msg');
+    if (btn) btn.style.opacity = '0';
+  });
+});
 </script>
 {% endblock %}

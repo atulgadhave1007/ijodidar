@@ -206,24 +206,37 @@ def create_app(env='default'):
     def inject_globals():
         from flask_login import current_user
         from app.models import Interest, Message, Conversation, Notification
+        from app.cache import cache_get, cache_set
         unread_messages   = 0
         pending_interests = 0
         unread_notifs     = 0
         if current_user.is_authenticated:
-            unread_messages = (Message.query
-                               .join(Conversation)
-                               .filter(
-                                   Message.sender_id != current_user.id,
-                                   Message.is_read   == False,
-                                   ((Conversation.user1_id == current_user.id) |
-                                    (Conversation.user2_id == current_user.id))
-                               ).count())
-            pending_interests = (Interest.query
-                                 .filter_by(receiver_id=current_user.id, status='pending')
+            cache_key = f'ctx_globals:{current_user.id}'
+            cached = cache_get(cache_key)
+            if cached:
+                unread_messages   = cached['unread_messages']
+                pending_interests = cached['pending_interests']
+                unread_notifs     = cached['unread_notifs']
+            else:
+                unread_messages = (Message.query
+                                   .join(Conversation)
+                                   .filter(
+                                       Message.sender_id != current_user.id,
+                                       Message.is_read   == False,
+                                       ((Conversation.user1_id == current_user.id) |
+                                        (Conversation.user2_id == current_user.id))
+                                   ).count())
+                pending_interests = (Interest.query
+                                     .filter_by(receiver_id=current_user.id, status='pending')
+                                     .count())
+                unread_notifs = (Notification.query
+                                 .filter_by(user_id=current_user.id, is_read=False)
                                  .count())
-            unread_notifs = (Notification.query
-                             .filter_by(user_id=current_user.id, is_read=False)
-                             .count())
+                cache_set(cache_key, {
+                    'unread_messages':   unread_messages,
+                    'pending_interests': pending_interests,
+                    'unread_notifs':     unread_notifs,
+                }, ttl=60)
         return dict(
             datetime=datetime, date=date,
             unread_messages=unread_messages,

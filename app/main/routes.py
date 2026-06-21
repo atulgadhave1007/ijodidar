@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from app.models import (User, Profile, Address, City, ProfileView,
                         Interest, BlockList, Shortlist)
 from app import db
-from app.utils import calculate_profile_completeness, calculate_match_score
+from app.utils import calculate_profile_completeness, calculate_match_score, get_cached_match_score
 from datetime import datetime, date, timedelta
 
 main_bp = Blueprint('main', __name__)
@@ -133,7 +133,7 @@ def home():
     scored = []
     spotlight_users = []
     for c in candidates:
-        score = calculate_match_score(current_user, c)
+        score = get_cached_match_score(current_user, c)
         boost = get_signal_boost(current_user.id, c.id)
         score = max(0, min(100, score + boost))   # clamp 0-100
         if c.profile and c.profile.is_spotlight:

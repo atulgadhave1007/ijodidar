@@ -24,6 +24,7 @@ class MembershipPlan(db.Model):
     can_view_full_profile = db.Column(db.Boolean, default=True)
     highlighted     = db.Column(db.Boolean, default=False)  # show as recommended plan
     description     = db.Column(db.Text)
+    billing_period  = db.Column(db.String(10), default='monthly')  # monthly | annual
 
     subscriptions = db.relationship('UserSubscription', backref='plan', lazy='dynamic')
 
@@ -262,6 +263,8 @@ class Message(db.Model):
     body            = db.Column(db.Text, nullable=False)
     is_read         = db.Column(db.Boolean, default=False)
     sent_at         = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    is_deleted_by_sender   = db.Column(db.Boolean, default=False, nullable=False)
+    is_deleted_by_receiver = db.Column(db.Boolean, default=False, nullable=False)
 
     sender = db.relationship('User', foreign_keys=[sender_id], backref='messages_sent')
 

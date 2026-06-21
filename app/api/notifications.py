@@ -5,6 +5,7 @@ from app import db
 from app.models import Notification
 from app.api.errors import api_ok, api_error, NOT_FOUND
 from app.api.schemas import notification_schema, notifications_schema
+from app.cache import cache_delete
 
 notifications_api_bp = Blueprint('notifications_api', __name__)
 
@@ -48,4 +49,5 @@ def mark_read():
 
     updated = q.update({'is_read': True}, synchronize_session='fetch')
     db.session.commit()
+    cache_delete(f'ctx_globals:{uid}')
     return api_ok({'marked': updated})

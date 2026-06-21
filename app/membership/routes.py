@@ -41,11 +41,14 @@ def _activate_plan(user, plan, payment_ref, amount_paise):
 @membership_bp.route('/plans')
 @login_required
 def plans():
-    all_plans   = MembershipPlan.query.order_by(MembershipPlan.price_inr).all()
-    current_sub = current_user.active_subscription
+    all_plans     = MembershipPlan.query.order_by(MembershipPlan.price_inr).all()
+    monthly_plans = [p for p in all_plans if p.billing_period == 'monthly']
+    annual_plans  = [p for p in all_plans if p.billing_period == 'annual']
+    current_sub   = current_user.active_subscription
     return render_template('membership/plans.html',
                            user=current_user,
-                           plans=all_plans,
+                           plans=monthly_plans,
+                           annual_plans=annual_plans,
                            current_sub=current_sub,
                            razorpay_key=current_app.config['RAZORPAY_KEY_ID'])
 

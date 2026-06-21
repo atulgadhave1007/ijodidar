@@ -6,6 +6,7 @@ from app import db
 from app.models import Conversation, Message, User, Interest
 from app.api.errors import api_ok, api_error, NOT_FOUND, FORBIDDEN, VALIDATION_ERROR
 from app.api.schemas import conv_summary_schema, convs_summary_schema, message_schema, messages_schema
+from app.cache import cache_delete
 
 conversations_api_bp = Blueprint('conversations_api', __name__)
 
@@ -98,6 +99,8 @@ def send_message(conv_id):
     conv.updated_at = _dt.utcnow()
     db.session.add(msg)
     db.session.commit()
+    other_uid = conv.user2_id if uid == conv.user1_id else conv.user1_id
+    cache_delete(f'ctx_globals:{other_uid}')
 
     # In-app notification (non-fatal)
     try:
@@ -125,4 +128,5 @@ def mark_read(conv_id):
      .filter(Message.sender_id != uid)
      .update({'is_read': True}))
     db.session.commit()
+    cache_delete(f'ctx_globals:{uid}')
     return api_ok({'success': True})

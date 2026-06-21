@@ -6,6 +6,7 @@ from app import db, limiter
 from app.models import Interest, User, BlockList, Conversation
 from app.api.errors import api_ok, api_error, NOT_FOUND, FORBIDDEN, VALIDATION_ERROR
 from app.api.schemas import interest_schema, interests_schema
+from app.cache import cache_delete
 
 interests_api_bp = Blueprint('interests_api', __name__)
 
@@ -81,6 +82,8 @@ def send_interest():
         if plan:
             plan.interests_this_month = (plan.interests_this_month or 0) + 1
             db.session.commit()
+
+    cache_delete(f'ctx_globals:{receiver_id}')
 
     # Side effects (non-fatal)
     try:
@@ -173,6 +176,7 @@ def respond_interest(interest_id):
             return api_error(FORBIDDEN, 'Not your interest to withdraw', 403)
         interest.status = 'withdrawn'
         db.session.commit()
+        cache_delete(f'ctx_globals:{interest.receiver_id}')
         return api_ok(interest_schema.dump(interest))
 
     # accept / decline — only receiver can act
@@ -214,6 +218,7 @@ def respond_interest(interest_id):
         except Exception:
             pass
 
+    cache_delete(f'ctx_globals:{interest.sender_id}', f'ctx_globals:{interest.receiver_id}')
     out = interest_schema.dump(interest)
     if conv_id:
         out['conversation_id'] = conv_id

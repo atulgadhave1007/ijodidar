@@ -4,6 +4,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import joinedload, selectinload
 from app import db, limiter
 from app.models import Conversation, Message, User, Interest
+from app.cache import cache_delete
 
 messaging_bp = Blueprint('messaging', __name__)
 
@@ -78,6 +79,7 @@ def conversation(conv_id):
         conv.updated_at = db.func.now()
         db.session.add(msg)
         db.session.commit()
+        cache_delete(f'ctx_globals:{other.id}')
 
         # In-app notification (sync — fast DB write)
         from app.utils import create_notification
@@ -110,8 +112,14 @@ def conversation(conv_id):
      .filter(Message.sender_id != current_user.id)
      .update({'is_read': True}))
     db.session.commit()
+    cache_delete(f'ctx_globals:{current_user.id}')
 
-    messages = conv.messages.all()
+    uid = current_user.id
+    messages = [
+        m for m in conv.messages.all()
+        if not (m.sender_id == uid and m.is_deleted_by_sender)
+        and not (m.sender_id != uid and m.is_deleted_by_receiver)
+    ]
     return render_template('messaging/conversation.html',
                            user=current_user, conv=conv, other=other,
                            messages=messages, can_msg=can_msg)
@@ -123,21 +131,44 @@ def conversation(conv_id):
 def poll_messages(conv_id):
     conv     = _get_or_403(conv_id)
     after_id = request.args.get('after', 0, type=int)
-    msgs     = (Message.query
-                .filter_by(conversation_id=conv_id)
-                .filter(Message.id > after_id)
-                .order_by(Message.sent_at.asc()).all())
+    uid  = current_user.id
+    msgs = (Message.query
+            .filter_by(conversation_id=conv_id)
+            .filter(Message.id > after_id)
+            .order_by(Message.sent_at.asc()).all())
     for m in msgs:
-        if m.sender_id != current_user.id:
+        if m.sender_id != uid:
             m.is_read = True
     db.session.commit()
+    visible = [
+        m for m in msgs
+        if not (m.sender_id == uid and m.is_deleted_by_sender)
+        and not (m.sender_id != uid and m.is_deleted_by_receiver)
+    ]
     return jsonify([{
         'id':        m.id,
         'body':      m.body,
         'sender_id': m.sender_id,
         'sent_at':   m.sent_at.strftime('%I:%M %p'),
-        'is_mine':   m.sender_id == current_user.id,
-    } for m in msgs])
+        'is_mine':   m.sender_id == uid,
+    } for m in visible])
+
+
+# ── SOFT DELETE MESSAGE ────────────────────────────────────────────────────
+@messaging_bp.route('/messages/<int:conv_id>/<int:msg_id>/delete', methods=['POST'])
+@login_required
+def delete_message(conv_id, msg_id):
+    _get_or_403(conv_id)
+    msg = Message.query.filter_by(id=msg_id, conversation_id=conv_id).first_or_404()
+    uid = current_user.id
+    if msg.sender_id == uid:
+        msg.is_deleted_by_sender = True
+    else:
+        msg.is_deleted_by_receiver = True
+    db.session.commit()
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    return redirect(url_for('messaging.conversation', conv_id=conv_id))
 
 
 # ── WebRTC CALL PAGE (Phase 13.1) ─────────────────────────────────────────

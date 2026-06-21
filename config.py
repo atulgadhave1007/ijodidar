@@ -74,6 +74,8 @@ class Config:
     JWT_HEADER_TYPE            = 'Bearer'
     # Blocklist: Redis DB4 — populated on logout / password change
     JWT_REDIS_BLOCKLIST_URL    = os.environ.get('REDIS_URL', 'redis://localhost:6379/4')
+    # App-layer cache: Redis DB2 — badge counts (60s TTL), match scores (1hr TTL)
+    CACHE_REDIS_URL            = os.environ.get('REDIS_URL', 'redis://localhost:6379/2')
 
     # Aadhaar / KYC Verification (Phase 14.2)
     KYC_API_KEY      = os.environ.get('KYC_API_KEY', '')   # Surepass/Signzy/Karza

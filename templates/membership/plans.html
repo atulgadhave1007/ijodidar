@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Membership Plans – iJodidar{% endblock %}
 {% block content %}
-<div class="ij-container" style="max-width:900px;">
-  <div class="text-center mb-5">
+<div class="ij-container" style="max-width:960px;">
+  <div class="text-center mb-4">
     <h1 style="font-size:2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;">{{ 'Membership Plans'|t }}</h1>
     <p style="color:var(--text-2);font-size:15px;">Upgrade to connect more, unlock all features.</p>
     {% if current_sub %}
@@ -15,7 +15,22 @@
     {% endif %}
   </div>
 
-  <div class="row g-4 justify-content-center mb-5">
+  {# ── Billing period toggle ── #}
+  <div class="d-flex justify-content-center mb-4">
+    <div class="btn-group" role="group">
+      <button id="toggle-monthly" type="button" class="btn btn-sm btn-brand active"
+              onclick="showPeriod('monthly')" style="border-radius:8px 0 0 8px;min-width:110px;">
+        Monthly
+      </button>
+      <button id="toggle-annual" type="button" class="btn btn-sm btn-outline-brand"
+              onclick="showPeriod('annual')" style="border-radius:0 8px 8px 0;min-width:130px;">
+        Annual <span class="badge bg-success ms-1" style="font-size:10px;">Save 37%</span>
+      </button>
+    </div>
+  </div>
+
+  {# ── Monthly plans ── #}
+  <div id="plans-monthly" class="row g-4 justify-content-center mb-5">
     {% for plan in plans %}
     <div class="col-md-6 col-lg-3">
       <div class="plan-card {{ 'featured' if plan.highlighted else '' }} h-100">
@@ -36,7 +51,7 @@
         <div class="plan-body">
           <p style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">{{ plan.description or '' }}</p>
           {% for yes,label in [
-            (True, (plan.max_interests|string + '/mo interests') if plan.max_interests else 'Unlimited interests'),
+            (True, (plan.max_interests|string + '/mo interests') if plan.max_interests < 999 else 'Unlimited interests'),
             (plan.can_message, 'Messaging enabled'),
             (plan.can_view_phone, 'View phone numbers'),
             (True, 'Full profile access'),
@@ -46,7 +61,6 @@
             <span>{{ label }}</span>
           </div>
           {% endfor %}
-
           <div style="margin-top:16px;">
             {% if current_sub and current_sub.plan.name == plan.name %}
             <button disabled class="btn-ij-ghost w-100 justify-content-center"
@@ -71,6 +85,61 @@
       </div>
     </div>
     {% endfor %}
+  </div>
+
+  {# ── Annual plans ── #}
+  <div id="plans-annual" class="row g-4 justify-content-center mb-5 d-none">
+    {% for plan in annual_plans %}
+    <div class="col-md-6 col-lg-4">
+      <div class="plan-card {{ 'featured' if plan.highlighted else '' }} h-100">
+        {% if plan.highlighted %}
+        <div style="background:var(--brand);color:#fff;text-align:center;
+                    padding:8px;font-size:11px;font-weight:700;letter-spacing:.06em;">
+          ⭐ BEST VALUE
+        </div>
+        {% endif %}
+        <div class="plan-header">
+          <div style="font-weight:800;font-size:16px;margin-bottom:4px;">{{ plan.name }}</div>
+          <div class="plan-price">₹{{ plan.price_inr }}<span style="font-size:.9rem;color:var(--text-2);font-weight:500;"> / year</span></div>
+          <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:2px;">
+            ≈ ₹{{ (plan.price_inr / 12)|int }}/mo · Save 37%
+          </div>
+        </div>
+        <div class="plan-body">
+          <p style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">{{ plan.description or '' }}</p>
+          {% for yes,label in [
+            (True, (plan.max_interests|string + '/mo interests') if plan.max_interests < 999 else 'Unlimited interests'),
+            (plan.can_message, 'Messaging enabled'),
+            (plan.can_view_phone, 'View phone numbers'),
+            (True, 'Full profile access'),
+          ] %}
+          <div class="plan-feature {{ 'yes' if yes else 'no' }}">
+            <i class="bi bi-{{ 'check-circle-fill' if yes else 'x-circle' }}"></i>
+            <span>{{ label }}</span>
+          </div>
+          {% endfor %}
+          <div style="margin-top:16px;">
+            {% if current_sub and current_sub.plan.name == plan.name %}
+            <button disabled class="btn-ij-ghost w-100 justify-content-center"
+                    style="padding:10px;border-radius:8px;opacity:.6;cursor:not-allowed;">
+              <i class="bi bi-check-lg me-1"></i>Current Plan
+            </button>
+            {% else %}
+            <button class="pay-btn btn-ij-primary w-100 justify-content-center"
+                    data-plan-id="{{ plan.id }}" data-plan-name="{{ plan.name }}"
+                    data-amount="{{ plan.price_inr * 100 }}"
+                    style="padding:10px;border-radius:8px;">
+              <i class="bi bi-lightning-fill me-1"></i>{{ 'Get Annual Plan'|t }}
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if not annual_plans %}
+    <div class="col-12 text-center text-muted py-4">Annual plans coming soon.</div>
+    {% endif %}
   </div>
 
   <!-- Assisted Plan Banner -->
@@ -115,16 +184,38 @@
 {% block scripts %}
 {% if razorpay_key %}
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endif %}
 <script>
-document.querySelectorAll('.pay-btn').forEach(btn => {
+function showPeriod(period) {
+  document.getElementById('plans-monthly').classList.toggle('d-none', period !== 'monthly');
+  document.getElementById('plans-annual').classList.toggle('d-none', period !== 'annual');
+  document.getElementById('toggle-monthly').classList.toggle('active', period === 'monthly');
+  document.getElementById('toggle-annual').classList.toggle('active', period === 'annual');
+  document.getElementById('toggle-monthly').className =
+    period === 'monthly' ? 'btn btn-sm btn-brand active' : 'btn btn-sm btn-outline-brand';
+  document.getElementById('toggle-annual').className =
+    period === 'annual'  ? 'btn btn-sm btn-brand active' : 'btn btn-sm btn-outline-brand';
+  // re-style save badge after class reset
+  ['toggle-monthly','toggle-annual'].forEach(id => {
+    const b = document.getElementById(id);
+    if (id === 'toggle-annual') {
+      if (!b.querySelector('.badge'))
+        b.innerHTML = 'Annual <span class="badge bg-success ms-1" style="font-size:10px;">Save 37%</span>';
+    }
+  });
+}
+
+{% if razorpay_key %}
+function initPayBtn(btn) {
   btn.addEventListener('click', async () => {
     const planId = btn.dataset.planId;
     btn.disabled = true;
+    const origHtml = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="width:14px;height:14px;border-width:2px;"></span>Loading…';
     try {
       const res   = await fetch(`/plans/create-order/${planId}`, {method:'POST'});
       const order = await res.json();
-      if (order.error) { alert(order.error); btn.disabled=false; return; }
+      if (order.error) { alert(order.error); btn.disabled=false; btn.innerHTML=origHtml; return; }
       const rzp = new Razorpay({
         key: '{{ razorpay_key }}', amount: order.amount, currency: order.currency,
         name: 'iJodidar', description: `${btn.dataset.planName} Plan`,
@@ -140,20 +231,20 @@ document.querySelectorAll('.pay-btn').forEach(btn => {
           if (d.success) window.location.href = d.redirect;
           else alert('Verification failed. Contact support.');
         },
-        modal: {ondismiss: () => { btn.disabled=false; btn.innerHTML='<i class="bi bi-lightning-fill me-1"></i>Upgrade Now'; }}
+        modal: {ondismiss: () => { btn.disabled=false; btn.innerHTML=origHtml; }}
       });
       rzp.open();
-    } catch(e) { alert('Error. Please try again.'); btn.disabled=false; }
+    } catch(e) { alert('Error. Please try again.'); btn.disabled=false; btn.innerHTML=origHtml; }
   });
-});
-</script>
+}
 {% else %}
-<script>
-document.querySelectorAll('.pay-btn').forEach(btn => {
+function initPayBtn(btn) {
   btn.addEventListener('click', () => {
     window.location.href = `/plans/upgrade/${btn.dataset.planId}`;
   });
-});
-</script>
+}
 {% endif %}
+
+document.querySelectorAll('.pay-btn').forEach(initPayBtn);
+</script>
 {% endblock %}
