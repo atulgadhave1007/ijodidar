@@ -34,9 +34,12 @@ class Config:
     RAZORPAY_KEY_SECRET    = os.environ.get('RAZORPAY_KEY_SECRET', '')
     RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '')  # set in Razorpay dashboard
 
-    # SMS (MSG91)
-    MSG91_AUTH_KEY   = os.environ.get('MSG91_AUTH_KEY', '')
-    MSG91_SENDER_ID  = os.environ.get('MSG91_SENDER_ID', 'IJODDR')
+    # SMS — Fast2SMS (interim, no DLT needed)
+    FAST2SMS_API_KEY = os.environ.get('FAST2SMS_API_KEY', '')
+
+    # SMS — MSG91 (production, after DLT approval)
+    MSG91_AUTH_KEY    = os.environ.get('MSG91_AUTH_KEY', '')
+    MSG91_SENDER_ID   = os.environ.get('MSG91_SENDER_ID', 'IJODDR')
     MSG91_TEMPLATE_ID = os.environ.get('MSG91_TEMPLATE_ID', '')
 
     # Admin

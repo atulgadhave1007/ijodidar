@@ -247,27 +247,57 @@ def logout():
 
 # ── PHONE OTP ─────────────────────────────────────────────────────────────
 def _send_sms_otp(phone, otp):
-    """Send OTP via MSG91. In dev (no key): logs to console. Returns True on success."""
+    """Send OTP via Fast2SMS (primary) → MSG91 (when DLT ready) → console (dev).
+    Priority: Fast2SMS if key set, else MSG91 if key set, else log to console.
+    Returns True on success."""
     import requests as req
-    key         = current_app.config.get('MSG91_AUTH_KEY', '')
-    template_id = current_app.config.get('MSG91_TEMPLATE_ID', '')
 
-    if not key:
-        current_app.logger.info(f"[DEV OTP] Phone: {phone}  OTP: {otp}")
-        return True
-    try:
-        resp = req.post(
-            "https://api.msg91.com/api/v5/otp",
-            json={"template_id": template_id,
-                  "mobile": f"91{phone}",
-                  "authkey": key,
-                  "otp": otp},
-            timeout=10,
-        )
-        return resp.status_code == 200
-    except Exception as e:
-        current_app.logger.error(f"MSG91 error: {e}")
+    fast2sms_key = current_app.config.get('FAST2SMS_API_KEY', '')
+    msg91_key    = current_app.config.get('MSG91_AUTH_KEY', '')
+
+    # ── Fast2SMS (interim, no DLT needed) ────────────────────────────────
+    if fast2sms_key:
+        try:
+            resp = req.get(
+                "https://www.fast2sms.com/dev/bulkV2",
+                params={
+                    "authorization": fast2sms_key,
+                    "variables_values": otp,
+                    "route":            "otp",
+                    "numbers":          phone,
+                },
+                headers={"cache-control": "no-cache"},
+                timeout=10,
+            )
+            data = resp.json()
+            if data.get('return') is True:
+                current_app.logger.info(f"Fast2SMS OTP sent to {phone}")
+                return True
+            current_app.logger.error(f"Fast2SMS error: {data}")
+        except Exception as e:
+            current_app.logger.error(f"Fast2SMS exception: {e}")
         return False
+
+    # ── MSG91 (production, after DLT approval) ───────────────────────────
+    if msg91_key:
+        template_id = current_app.config.get('MSG91_TEMPLATE_ID', '')
+        try:
+            resp = req.post(
+                "https://api.msg91.com/api/v5/otp",
+                json={"template_id": template_id,
+                      "mobile": f"91{phone}",
+                      "authkey": msg91_key,
+                      "otp": otp},
+                timeout=10,
+            )
+            return resp.status_code == 200
+        except Exception as e:
+            current_app.logger.error(f"MSG91 error: {e}")
+            return False
+
+    # ── Dev fallback (no keys configured) ────────────────────────────────
+    current_app.logger.info(f"[DEV OTP] Phone: {phone}  OTP: {otp}")
+    return True
 
 
 @auth_bp.route('/send-phone-otp', methods=['POST'])

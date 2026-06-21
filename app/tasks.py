@@ -276,25 +276,46 @@ def send_password_reset_email_task(self, user_id: int, reset_url: str):
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=30)
 def send_sms_task(self, phone: str, otp: str):
-    """Send OTP via MSG91. Retries on failure."""
+    """Send OTP via Fast2SMS (primary) → MSG91 (after DLT) → console (dev)."""
+    import requests as req, logging
+    log = logging.getLogger(__name__)
+
+    fast2sms_key = os.environ.get('FAST2SMS_API_KEY', '')
+    msg91_key    = os.environ.get('MSG91_AUTH_KEY', '')
+
     try:
-        import requests as req
-        key         = os.environ.get('MSG91_AUTH_KEY', '')
-        template_id = os.environ.get('MSG91_TEMPLATE_ID', '')
-        if not key:
-            import logging
-            logging.getLogger(__name__).info(f'[DEV OTP] Phone:{phone} OTP:{otp}')
-            return {'status': 'dev_logged', 'otp': otp}
-        resp = req.post(
-            "https://api.msg91.com/api/v5/otp",
-            json={"template_id": template_id,
-                  "mobile": f"91{phone}",
-                  "authkey": key,
-                  "otp": otp},
-            timeout=10,
-        )
-        return {'status': 'sent' if resp.status_code == 200 else 'failed',
-                'code': resp.status_code}
+        if fast2sms_key:
+            resp = req.get(
+                "https://www.fast2sms.com/dev/bulkV2",
+                params={"authorization": fast2sms_key,
+                        "variables_values": otp,
+                        "route": "otp",
+                        "numbers": phone},
+                headers={"cache-control": "no-cache"},
+                timeout=10,
+            )
+            data = resp.json()
+            if data.get('return') is True:
+                return {'status': 'sent', 'provider': 'fast2sms'}
+            log.error(f"Fast2SMS error: {data}")
+            return {'status': 'failed', 'provider': 'fast2sms'}
+
+        if msg91_key:
+            template_id = os.environ.get('MSG91_TEMPLATE_ID', '')
+            resp = req.post(
+                "https://api.msg91.com/api/v5/otp",
+                json={"template_id": template_id,
+                      "mobile": f"91{phone}",
+                      "authkey": msg91_key,
+                      "otp": otp},
+                timeout=10,
+            )
+            return {'status': 'sent' if resp.status_code == 200 else 'failed',
+                    'provider': 'msg91'}
+
+        log.info(f'[DEV OTP] Phone:{phone} OTP:{otp}')
+        return {'status': 'dev_logged', 'otp': otp}
+
     except Exception as exc:
         raise self.retry(exc=exc)
 
